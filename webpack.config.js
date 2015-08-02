@@ -18,9 +18,16 @@ module.exports = {
     new webpack.NoErrorsPlugin()
   ],
   resolve: {
-    extensions: ['', '.js']
+    modulesDirectories: [
+      'node_modules'
+    ],
+    extensions: ['', '.json', '.js']
   },
   module: {
+    preLoaders: [{
+      test: /\.json$/,
+      loader: 'json'
+    }],
     loaders: [{
       test: /\.js$/,
       loaders: ['react-hot', 'babel'],
