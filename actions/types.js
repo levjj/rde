@@ -8,3 +8,4 @@ export const SWAP_STATE = 'SWAP_STATE';
 export const SWAP_STATE_FAILED = 'SWAP_STATE_FAILED';
 export const EVENT_HANDLED = 'EVENT_HANDLED';
 export const EVENT_FAILED = 'EVENT_FAILED';
+export const TOGGLE_ACTIVE = 'TOGGLE_ACTIVE';

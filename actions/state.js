@@ -4,7 +4,8 @@ import {
   SWAP_STATE,
   SWAP_STATE_FAILED,
   EVENT_FAILED,
-  EVENT_HANDLED
+  EVENT_HANDLED,
+  TOGGLE_ACTIVE
 } from './types';
 
 import deepFreeze from 'deep-freeze';
@@ -109,6 +110,10 @@ export function swapState(idx) {
 
 export function event() {
   return (dispatch, getState) => {
+    if (!getState().state.isActive) {
+      window.state = currentState(getState());
+      return { type: 'noop' };
+    }
     try {
       checkState(window.state);
       return {
@@ -122,5 +127,14 @@ export function event() {
         error: e
       };
     }
+  };
+}
+
+export function toggleActive() {
+  return (dispatch, getState) => {
+    dispatch(refresh(currentVersion(getState()).render));
+    return {
+      type: TOGGLE_ACTIVE
+    };
   };
 }

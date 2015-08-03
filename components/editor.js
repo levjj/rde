@@ -8,7 +8,7 @@ require('brace/theme/eclipse');
 
 import LiveView from './liveview';
 import { changeReqest, swapVersion } from '../actions/version';
-import { reset, swapState } from '../actions/state';
+import { reset, swapState, toggleActive } from '../actions/state';
 
 @connect(state => ({
   source: state.version.source,
@@ -19,7 +19,8 @@ import { reset, swapState } from '../actions/state';
   currVersion: state.version.current,
   maxVersion: state.version.versions.length - 1,
   currState: state.state.current,
-  maxState: state.state.states.length - 1
+  maxState: state.state.states.length - 1,
+  isActive: state.state.isActive
 }))
 export default class Editor extends Component {
   static propTypes = {
@@ -32,7 +33,8 @@ export default class Editor extends Component {
     currVersion: PropTypes.number.isRequired,
     maxVersion: PropTypes.number.isRequired,
     currState: PropTypes.number.isRequired,
-    maxState: PropTypes.number.isRequired
+    maxState: PropTypes.number.isRequired,
+    isActive: PropTypes.bool.isRequired
   }
 
   componentDidMount() {
@@ -61,12 +63,24 @@ export default class Editor extends Component {
     this.props.dispatch(swapState(+e.target.value));
   }
 
+  onToggle() {
+    this.props.dispatch(toggleActive());
+  }
+
+  onOpen() {
+
+  }
+
+  onSave() {
+
+  }
+
   onReset() {
     this.props.dispatch(reset());
   }
 
   render() {
-    const { source, dom, currVersion, maxVersion, currState, maxState } = this.props;
+    const { source, dom, currVersion, maxVersion, currState, maxState, isActive } = this.props;
     return (
       <Row>
         <Col xs={12}>
@@ -90,7 +104,7 @@ export default class Editor extends Component {
               <Col xs={2}>
                 Version
               </Col>
-              <Col xs={7}>
+              <Col xs={5}>
                 <input ref="versionSlider"
                     type="range"
                     value={currVersion}
@@ -98,8 +112,16 @@ export default class Editor extends Component {
                     min={0}
                     max={maxVersion} />
               </Col>
-              <Col xs={3}>
+              <Col xs={2}>
                 {currVersion + 1} / {maxVersion + 1}
+              </Col>
+              <Col xs={3}>
+                <Button onClick={::this.onOpen} bsSize="small">
+                  <Glyphicon glyph="folder-open" />
+                </Button>
+                <Button onClick={::this.onSave} bsSize="small">
+                  <Glyphicon glyph="floppy-disk" />
+                </Button>
               </Col>
             </Row>
             <hr />
@@ -107,7 +129,7 @@ export default class Editor extends Component {
               <Col xs={2}>
                 State
               </Col>
-              <Col xs={7}>
+              <Col xs={5}>
                 <input ref="stateSlider"
                     type="range"
                     value={currState}
@@ -115,9 +137,14 @@ export default class Editor extends Component {
                     min={0}
                     max={maxState} />
               </Col>
+              <Col xs={2}>
+                {currState + 1} / {maxState + 1}
+              </Col>
               <Col xs={3}>
-                {currState + 1} / {maxState + 1} {' '}
-                <Button onClick={::this.onReset} bsSize="xsmall">
+                <Button onClick={::this.onToggle} bsSize="small">
+                  <Glyphicon glyph={isActive ? 'pause' : 'play'} />
+                </Button>
+                <Button onClick={::this.onReset} bsSize="small">
                   <Glyphicon glyph="repeat" />
                 </Button>
               </Col>

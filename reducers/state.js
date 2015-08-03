@@ -4,14 +4,16 @@ import {
   SWAP_STATE,
   SWAP_STATE_FAILED,
   EVENT_HANDLED,
-  EVENT_FAILED
+  EVENT_FAILED,
+  TOGGLE_ACTIVE
 } from '../actions/types';
 
 const initialState = {
   states: [],
   current: 0,
   dom: '',
-  error: null
+  error: null,
+  isActive: true
 };
 
 export function currentState(state) {
@@ -73,6 +75,13 @@ function eventFailed(state, action) {
   };
 }
 
+function toggleActive(state) {
+  return {
+    ...state,
+    isActive: !!!state.isActive
+  };
+}
+
 export default function code(state = initialState, action = {}) {
   switch (action.type) {
   case RESET_STATE: return resetState(state, action);
@@ -81,6 +90,7 @@ export default function code(state = initialState, action = {}) {
   case SWAP_STATE_FAILED: return swapStateFailed(state, action);
   case EVENT_HANDLED: return eventHandled(state, action);
   case EVENT_FAILED: return eventFailed(state, action);
+  case TOGGLE_ACTIVE: return toggleActive(state, action);
   default: return state;
   }
 }

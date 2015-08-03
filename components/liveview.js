@@ -12,9 +12,13 @@ export default class LiveView extends Component {
     $(view).append(this.props.dom);
   }
 
-  componentDidUpdate() {
+  componentWillUpdate() {
     const view = React.findDOMNode(this.refs.view);
     $(view).empty();
+  }
+
+  componentDidUpdate() {
+    const view = React.findDOMNode(this.refs.view);
     $(view).append(this.props.dom);
   }
 
