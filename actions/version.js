@@ -1,20 +1,19 @@
 import {
-  HOT_REQUEST,
-  HOT_SWAP,
-  HOT_SWAP_SUCCESS,
-  HOT_SWAP_FAILED,
-  EVENT_FAILED,
-  EVENT_HANDLED
-} from './action_types';
+  CHANGE_REQUEST,
+  ADD_VERSION,
+  ADD_VERSION_FAILED,
+  SWAP_VERSION
+} from './types';
 
 import {parse} from 'esprima';
 import {analyze} from 'escope';
 import {replace} from 'estraverse';
 import {generate} from 'escodegen';
+import {refresh} from './state';
 
-export function hotReqest(source) {
+export function changeReqest(source) {
   return {
-    type: HOT_REQUEST,
+    type: CHANGE_REQUEST,
     source: source
   };
 }
@@ -175,71 +174,33 @@ function rewrite({ast, scopeManager}) {
   });
 }
 
-function gen(ast) {
-  return generate(ast);
-}
-
-function setup(src) {
-  return eval(src)();
-}
-
-// checks state for closures
-function checkState(state) {
-  const ws = new WeakSet();
-  function c(o) {
-    if (typeof o === 'function') {
-      throw new Error('Functions not allowed in state');
+export function addVersion(source) {
+  return (dispatch) => {
+    try {
+      const ast = rewrite(check(read(source)));
+      const [init, render] = eval(generate(ast))();
+      dispatch(refresh(render));
+      return {
+        type: ADD_VERSION,
+        source,
+        init,
+        render
+      };
+    } catch (e) {
+      return {
+        type: ADD_VERSION_FAILED,
+        error: e
+      };
     }
-    if (typeof o !== 'object') return;
-    ws.add(o);
-    Object.getOwnPropertyNames(o).forEach((prop) => {
-      if (o.hasOwnProperty(prop) &&
-          o[prop] !== null &&
-          !ws.has(o[prop])) {
-        c(o[prop]);
-      }
-    });
-  }
-  c(state);
-}
-
-function initState(getState) {
-  return ([init, render]) => {
-    const state = getState().code;
-    if (state.states.length === 0) {
-      window.state = {};
-      init();
-      checkState(window.state);
-    }
-    return [init, render, window.state];
   };
 }
 
-export function hotSwap() {
-  return {
-    types: [HOT_SWAP, HOT_SWAP_SUCCESS, HOT_SWAP_FAILED],
-    promise: (dispatch, getState) =>
-      Promise.resolve(getState().code.source)
-             .then(read)
-             .then(check)
-             .then(rewrite)
-             .then(gen)
-             .then(setup)
-             .then(initState(getState))
+export function swapVersion(idx) {
+  return (dispatch, getState) => {
+    dispatch(refresh(getState().version.versions[idx].render));
+    return {
+      type: SWAP_VERSION,
+      idx: idx
+    };
   };
-}
-
-export function event() {
-  try {
-    checkState(window.state);
-    return {
-      type: EVENT_HANDLED,
-      result: window.state
-    };
-  } catch(e) {
-    return {
-      type: EVENT_FAILED,
-      error: e
-    };
-  }
 }

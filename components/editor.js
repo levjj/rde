@@ -1,93 +1,151 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'redux/react';
-import { Row, Col, Panel } from 'react-bootstrap';
+import { PageHeader, Row, Col, Panel, Button, Glyphicon } from 'react-bootstrap';
 import AceEditor from 'react-ace/src/ace.jsx';
-import deepFreeze from 'deep-freeze';
-import clone from 'clone';
-import $ from 'jquery';
 
 require('brace/mode/javascript');
 require('brace/theme/eclipse');
 
 import LiveView from './liveview';
-import { hotReqest } from '../actions/hotswap_actions';
-import { currentState } from '../reducers/code';
+import { changeReqest, swapVersion } from '../actions/version';
+import { reset, swapState } from '../actions/state';
 
 @connect(state => ({
-  source: state.code.source,
-  isSwapping: state.code.isSwapping,
-  request: state.code.request,
-  error: state.code.error,
-  state: currentState(state),
-  render: state.code.render
+  source: state.version.source,
+  dom: state.state.dom,
+  request: state.version.request,
+  versionError: state.version.error,
+  stateError: state.state.error,
+  currVersion: state.version.current,
+  maxVersion: state.version.versions.length - 1,
+  currState: state.state.current,
+  maxState: state.state.states.length - 1
 }))
 export default class Editor extends Component {
   static propTypes = {
     source: PropTypes.string,
-    isSwapping: PropTypes.bool,
+    dom: PropTypes.any,
     request: PropTypes.any,
-    error: PropTypes.any,
+    versionError: PropTypes.any,
+    stateError: PropTypes.any,
     dispatch: PropTypes.func.isRequired,
-    state: PropTypes.any,
-    render: PropTypes.func
+    currVersion: PropTypes.number.isRequired,
+    maxVersion: PropTypes.number.isRequired,
+    currState: PropTypes.number.isRequired,
+    maxState: PropTypes.number.isRequired
+  }
+
+  componentDidMount() {
+    this.hasMounted = true;
+  }
+
+  componentWillUpdate() {
+    this.hasMounted = false;
+  }
+
+  componentDidUpdate() {
+    this.hasMounted = true;
   }
 
   onChange(newSource) {
-    this.props.dispatch(hotReqest(newSource));
-  }
-
-  renderCode() {
-    const { state, render } = this.props;
-    if (!state || !render) return $('<div></div>');
-    window.state = deepFreeze(clone(state));
-    try {
-      return render();
-    } catch (e) {
-      return $('<div class="alert alert-danger"></div>')
-        .text('render() needs to be a pure function!');
-    } finally {
-      window.state = state;
+    if (this.hasMounted && newSource !== this.props.source) {
+      this.props.dispatch(changeReqest(newSource));
     }
   }
 
+  onChangeVersion(e) {
+    this.props.dispatch(swapVersion(+e.target.value));
+  }
+
+  onChangeState(e) {
+    this.props.dispatch(swapState(+e.target.value));
+  }
+
+  onReset() {
+    this.props.dispatch(reset());
+  }
+
   render() {
-    const { source, error } = this.props;
-    const footer = error && error.toString();
+    const { source, dom, currVersion, maxVersion, currState, maxState } = this.props;
     return (
       <Row>
         <Col xs={12}>
-          <h1>Reactive Development Environment</h1>
+          <PageHeader>Reactive Development Environment</PageHeader>
         </Col>
         <Col xs={6}>
-          <Panel header="Source" bsStyle={this.style()} footer={footer}>
+          <Panel header="Source" bsStyle={this.versionStyle()} footer={this.versionFooter()}>
             <AceEditor mode="javascript"
-                       theme="eclipse"
-                       name="ace"
-                       height="30em"
-                       width="100%"
-                       fontSize={14}
-                       value={source}
-                       onChange={::this.onChange} />
+                      theme="eclipse"
+                      name="ace"
+                      height="30em"
+                      width="100%"
+                      fontSize={14}
+                      value={source}
+                      onChange={::this.onChange}/>
           </Panel>
         </Col>
         <Col xs={6}>
-          <Panel header="Result">
-            <LiveView dom={this.renderCode()} />
-          </Panel>
           <Panel header="Time Control">
-            <input id="mySlider"
-                type="range"
-                min={1}
-                max={14} />
+            <Row>
+              <Col xs={2}>
+                Version
+              </Col>
+              <Col xs={7}>
+                <input ref="versionSlider"
+                    type="range"
+                    value={currVersion}
+                    onChange={::this.onChangeVersion}
+                    min={0}
+                    max={maxVersion} />
+              </Col>
+              <Col xs={3}>
+                {currVersion + 1} / {maxVersion + 1}
+              </Col>
+            </Row>
+            <hr />
+            <Row>
+              <Col xs={2}>
+                State
+              </Col>
+              <Col xs={7}>
+                <input ref="stateSlider"
+                    type="range"
+                    value={currState}
+                    onChange={::this.onChangeState}
+                    min={0}
+                    max={maxState} />
+              </Col>
+              <Col xs={3}>
+                {currState + 1} / {maxState + 1} {' '}
+                <Button onClick={::this.onReset} bsSize="xsmall">
+                  <Glyphicon glyph="repeat" />
+                </Button>
+              </Col>
+            </Row>
+          </Panel>
+          <Panel header="Live View" bsStyle={this.stateStyle()} footer={this.stateFooter()}>
+            <LiveView dom={dom} />
           </Panel>
         </Col>
       </Row>
     );
   }
 
-  style() {
-    const { isSwapping, request, error } = this.props;
-    if (isSwapping || request) return 'warning';
-    return error ? 'danger' : 'success';
+  versionStyle() {
+    const { request, versionError } = this.props;
+    if (request) return 'warning';
+    return versionError ? 'danger' : 'success';
+  }
+
+  versionFooter() {
+    return this.props.versionError && this.props.versionError.toString();
+  }
+
+  stateStyle() {
+    return this.props.stateError ? 'danger' : undefined;
+  }
+
+  stateFooter() {
+    return this.props.stateError && this.props.stateError.toString();
   }
 }

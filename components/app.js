@@ -5,12 +5,16 @@ import { Provider } from 'redux/react';
 
 import builder from './builder';
 import * as stores from '../reducers/index';
+import {addVersion} from '../actions/version';
+import {reset} from '../actions/state';
 
 const store = composeStores(stores);
 
 let redux;
 function middleware(getState) {
-  return (next) => (action) => {
+  return (next) => (act) => {
+    const action = typeof act === 'function'
+      ? act(redux.dispatch, getState) : act;
     const { promise, types, ...rest } = action;
     action.dispatch = redux.dispatch;
     if (!promise) {
@@ -19,7 +23,7 @@ function middleware(getState) {
 
     const [REQUEST, SUCCESS, FAILURE] = types;
     next({...rest, type: REQUEST});
-    return promise(redux.dispatch, getState).then(
+    return promise.then(
       (result) => next({...rest, result, type: SUCCESS}),
       (error) => next({...rest, error, type: FAILURE})
     );
@@ -34,6 +38,20 @@ export default class App extends Component {
 
   componentWillMount() {
     window._ = builder(redux.dispatch);
+    redux.dispatch(addVersion(`var i = 23;
+
+function click() {
+    i++;
+}
+
+function render() {
+    return _.div(
+        _.h1("Demo"),
+        _.p("Hello there: " + i),
+        _.button({onclick: click}, "Click me")
+    );
+}`));
+    redux.dispatch(reset());
   }
 
   render() {

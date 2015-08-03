@@ -1,1 +1,2 @@
-export { default as code } from './code.js';
+export { default as version } from './version';
+export { default as state } from './state';

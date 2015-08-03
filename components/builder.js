@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import clone from 'clone';
 
-import {event} from '../actions/hotswap_actions';
+import {event} from '../actions/state';
 
 function wrapHandler(dispatch, func) {
   return function handler() {
