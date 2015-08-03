@@ -44,7 +44,8 @@ function addVersion(state, action) {
     source,
     request: null,
     versions: [...pastVersions, {source, init, render}],
-    current: pastVersions.length
+    current: pastVersions.length,
+    error: null
   };
 }
 
@@ -58,7 +59,7 @@ function addVersionFailed(state, action) {
 
 function swapVersion(state, action) {
   if (state.request) clearTimeout(state.request);
-  const { source, render } = state.versions[action.idx];
+  const { source } = state.versions[action.idx];
   return {
     ...state,
     source,

@@ -6,7 +6,8 @@ import { Provider } from 'redux/react';
 import builder from './builder';
 import * as stores from '../reducers/index';
 import {addVersion} from '../actions/version';
-import {reset} from '../actions/state';
+import {frame, reset} from '../actions/state';
+import {counter, source} from '../examples';
 
 const store = composeStores(stores);
 
@@ -38,20 +39,12 @@ export default class App extends Component {
 
   componentWillMount() {
     window._ = builder(redux.dispatch);
-    redux.dispatch(addVersion(`var i = 23;
-
-function click() {
-    i++;
-}
-
-function render() {
-    return _.div(
-        _.h1("Demo"),
-        _.p("Hello there: " + i),
-        _.button({onclick: click}, "Click me")
-    );
-}`));
+    redux.dispatch(addVersion(counter));
     redux.dispatch(reset());
+  }
+
+  componentDidMount() {
+    setInterval(() => redux.dispatch(frame()), 50);
   }
 
   render() {

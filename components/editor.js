@@ -1,13 +1,14 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'redux/react';
-import { PageHeader, Row, Col, Panel, Button, Glyphicon } from 'react-bootstrap';
+import { PageHeader, Row, Col, Panel, Button, Glyphicon, Input } from 'react-bootstrap';
 import AceEditor from 'react-ace/src/ace.jsx';
 
 require('brace/mode/javascript');
 require('brace/theme/eclipse');
 
+import { flappy, counter } from '../examples';
 import LiveView from './liveview';
-import { changeReqest, swapVersion } from '../actions/version';
+import { addVersion, changeReqest, swapVersion } from '../actions/version';
 import { reset, swapState, toggleActive } from '../actions/state';
 
 @connect(state => ({
@@ -56,11 +57,11 @@ export default class Editor extends Component {
   }
 
   onChangeVersion(e) {
-    this.props.dispatch(swapVersion(+e.target.value));
+    this.props.dispatch(swapVersion(+e.target.value - 1));
   }
 
   onChangeState(e) {
-    this.props.dispatch(swapState(+e.target.value));
+    this.props.dispatch(swapState(+e.target.value - 1));
   }
 
   onToggle() {
@@ -68,15 +69,19 @@ export default class Editor extends Component {
   }
 
   onOpen() {
-
+    this.props.dispatch(addVersion(counter));
   }
 
   onSave() {
-
+    this.props.dispatch(addVersion(flappy));
   }
 
   onReset() {
     this.props.dispatch(reset());
+  }
+
+  onAceLoad(editor) {
+    editor.getSession().setTabSize(2);
   }
 
   render() {
@@ -84,18 +89,19 @@ export default class Editor extends Component {
     return (
       <Row>
         <Col xs={12}>
-          <PageHeader>Reactive Development Environment</PageHeader>
+          <PageHeader>Reactive Live Programming</PageHeader>
         </Col>
         <Col xs={6}>
           <Panel header="Source" bsStyle={this.versionStyle()} footer={this.versionFooter()}>
             <AceEditor mode="javascript"
                       theme="eclipse"
                       name="ace"
-                      height="30em"
+                      height="40em"
                       width="100%"
                       fontSize={14}
                       value={source}
-                      onChange={::this.onChange}/>
+                      onChange={::this.onChange}
+                      onLoad={::this.onAceLoad}/>
           </Panel>
         </Col>
         <Col xs={6}>
@@ -104,16 +110,20 @@ export default class Editor extends Component {
               <Col xs={2}>
                 Version
               </Col>
-              <Col xs={5}>
-                <input ref="versionSlider"
-                    type="range"
-                    value={currVersion}
+              <Col xs={4}>
+                <input type="range"
+                    value={currVersion+1}
                     onChange={::this.onChangeVersion}
-                    min={0}
-                    max={maxVersion} />
+                    min={1}
+                    max={maxVersion+1} />
               </Col>
-              <Col xs={2}>
-                {currVersion + 1} / {maxVersion + 1}
+              <Col xs={3}>
+                <Input type="number"
+                    bsSize="small"
+                    value={currVersion+1}
+                    onChange={::this.onChangeVersion}
+                    min={1}
+                    max={maxVersion+1} />
               </Col>
               <Col xs={3}>
                 <Button onClick={::this.onOpen} bsSize="small">
@@ -129,16 +139,20 @@ export default class Editor extends Component {
               <Col xs={2}>
                 State
               </Col>
-              <Col xs={5}>
-                <input ref="stateSlider"
-                    type="range"
-                    value={currState}
+              <Col xs={4}>
+                <input type="range"
+                    value={currState+1}
                     onChange={::this.onChangeState}
-                    min={0}
-                    max={maxState} />
+                    min={1}
+                    max={maxState+1} />
               </Col>
-              <Col xs={2}>
-                {currState + 1} / {maxState + 1}
+              <Col xs={3}>
+                <Input type='number'
+                    bsSize="small"
+                    value={currState+1}
+                    onChange={::this.onChangeState}
+                    min={1}
+                    max={maxState+1} />
               </Col>
               <Col xs={3}>
                 <Button onClick={::this.onToggle} bsSize="small">

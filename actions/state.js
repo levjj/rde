@@ -130,6 +130,30 @@ export function event() {
   };
 }
 
+export function frame() {
+  return (dispatch, getState) => {
+    const { isActive, frameHandlers } = getState().state;
+    if (!isActive || !frameHandlers || !frameHandlers.length) {
+      return { type: 'noop' };
+    }
+    try {
+      window.state = clone(window.state);
+      frameHandlers.forEach(h => h());
+      checkState(window.state);
+      return {
+        type: EVENT_HANDLED,
+        state: window.state,
+        dom: renderCurrent(getState, window.state)
+      };
+    } catch(e) {
+      return {
+        type: EVENT_FAILED,
+        error: e
+      };
+    }
+  };
+}
+
 export function toggleActive() {
   return (dispatch, getState) => {
     dispatch(refresh(currentVersion(getState()).render));
