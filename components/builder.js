@@ -28,10 +28,8 @@ export default function builder(dispatch) {
         if (opts.background) {
           el.css('background-repeat', 'repeat');
           el.css('background-image', `url(${opts.background.url})`);
-          el.css('background-position-x',
-              (opts.background.x || 0) + 'px');
-          el.css('background-position-y',
-              (opts.background.y || 0) + 'px');
+          el.css('background-position',
+              `${opts.background.x || 0}px ${opts.background.y || 0}px`);
         }
         if (opts.x) {
           el.css('position', 'relative');
