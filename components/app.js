@@ -16,7 +16,10 @@ function middleware(getState) {
   return (next) => (act) => {
     const action = typeof act === 'function'
       ? act(redux.dispatch, getState) : act;
-    const { promise, types, ...rest } = action;
+    const { promise, type, types, ...rest } = action;
+    if (type) {
+      if (type === 'noop') return null;
+    }
     action.dispatch = redux.dispatch;
     if (!promise) {
       return next(action);
