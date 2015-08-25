@@ -69,11 +69,9 @@ export default class Editor extends Component {
   }
 
   onOpen() {
-    this.props.dispatch(addVersion(counter));
   }
 
   onSave() {
-    this.props.dispatch(addVersion(flappy));
   }
 
   onReset() {
@@ -92,7 +90,7 @@ export default class Editor extends Component {
           <PageHeader>Reactive Live Programming</PageHeader>
         </Col>
         <Col xs={6}>
-          <Panel header="Source" bsStyle={this.versionStyle()} footer={this.versionFooter()}>
+          <Panel header={this.sourceHeader()} bsStyle={this.versionStyle()} footer={this.versionFooter()}>
             <AceEditor mode="javascript"
                       theme="eclipse"
                       name="ace"
@@ -112,18 +110,18 @@ export default class Editor extends Component {
               </Col>
               <Col xs={4}>
                 <input type="range"
-                    value={currVersion+1}
+                    value={currVersion + 1}
                     onChange={::this.onChangeVersion}
                     min={1}
-                    max={maxVersion+1} />
+                    max={maxVersion + 1} />
               </Col>
               <Col xs={3}>
                 <Input type="number"
                     bsSize="small"
-                    value={currVersion+1}
+                    value={currVersion + 1}
                     onChange={::this.onChangeVersion}
                     min={1}
-                    max={maxVersion+1} />
+                    max={maxVersion + 1} />
               </Col>
               <Col xs={3}>
                 <Button onClick={::this.onOpen} bsSize="small">
@@ -141,18 +139,18 @@ export default class Editor extends Component {
               </Col>
               <Col xs={4}>
                 <input type="range"
-                    value={currState+1}
+                    value={currState + 1}
                     onChange={::this.onChangeState}
                     min={1}
-                    max={maxState+1} />
+                    max={maxState + 1} />
               </Col>
               <Col xs={3}>
-                <Input type='number'
+                <Input type="number"
                     bsSize="small"
-                    value={currState+1}
+                    value={currState + 1}
                     onChange={::this.onChangeState}
                     min={1}
-                    max={maxState+1} />
+                    max={maxState + 1} />
               </Col>
               <Col xs={3}>
                 <Button onClick={::this.onToggle} bsSize="small">
@@ -170,6 +168,35 @@ export default class Editor extends Component {
         </Col>
       </Row>
     );
+  }
+
+  loadFloppy(evt) {
+    evt.preventDefault();
+    this.props.dispatch(addVersion(flappy));
+    this.props.dispatch(reset());
+  }
+
+  loadCounter(evt) {
+    evt.preventDefault();
+    this.props.dispatch(addVersion(counter));
+    this.props.dispatch(reset());
+  }
+
+  sourceHeader() {
+    return (<span>
+          Source
+          <span className="pull-right">
+            <Button bsSize="small"
+               onClick={::this.loadCounter}>
+              Counter Example
+            </Button>
+            {' '}
+            <Button bsSize="small"
+               onClick={::this.loadFloppy}>
+              Floppy Bird Example
+            </Button>
+          </span>
+        </span>);
   }
 
   versionStyle() {
