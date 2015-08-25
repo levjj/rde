@@ -7,7 +7,7 @@ import builder from './builder';
 import * as stores from '../reducers/index';
 import {addVersion} from '../actions/version';
 import {frame, reset} from '../actions/state';
-import {counter, source} from '../examples';
+import {counter} from '../examples';
 
 const store = composeStores(stores);
 
