@@ -6,6 +6,7 @@ import {
 } from '../actions/types';
 
 import { addVersion as doAddVersion } from '../actions/version';
+import { refresh } from '../actions/state';
 
 const initialState = {
   source: '',
@@ -39,6 +40,7 @@ function changeReqest(state, action) {
 function addVersion(state, action) {
   const pastVersions = state.versions.slice(0, state.current + 1);
   const {source, init, render} = action;
+  setTimeout(() => action.dispatch(refresh(render)), 0);
   return {
     ...state,
     source,

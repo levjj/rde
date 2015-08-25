@@ -175,11 +175,10 @@ function rewrite({ast, scopeManager}) {
 }
 
 export function addVersion(source) {
-  return (dispatch) => {
+  return () => {
     try {
       const ast = rewrite(check(read(source)));
       const [init, render] = eval(generate(ast))();
-      dispatch(refresh(render));
       return {
         type: ADD_VERSION,
         source,
