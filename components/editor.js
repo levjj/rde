@@ -83,7 +83,7 @@ export default class Editor extends Component {
   }
 
   render() {
-    const { source, dom, currVersion, maxVersion, currState, maxState, isActive } = this.props;
+    const { source, dom, dispatch, currVersion, maxVersion, currState, maxState, isActive } = this.props;
     return (
       <Row>
         <Col xs={12}>
@@ -163,7 +163,7 @@ export default class Editor extends Component {
             </Row>
           </Panel>
           <Panel header="Live View" bsStyle={this.stateStyle()} footer={this.stateFooter()}>
-            <LiveView dom={dom} />
+            <LiveView dom={dom} dispatch={dispatch} />
           </Panel>
         </Col>
       </Row>

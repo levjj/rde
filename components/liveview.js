@@ -1,9 +1,12 @@
 import React, { Component, PropTypes } from 'react';
 import $ from 'jquery';
 
+import {build} from '../builder';
+
 export default class LiveView extends Component {
   static propTypes = {
-    dom: PropTypes.any
+    dom: PropTypes.any,
+    dispatch: PropTypes.func.isRequired
   }
 
   componentDidMount() {
@@ -19,7 +22,7 @@ export default class LiveView extends Component {
 
   componentDidUpdate() {
     const view = React.findDOMNode(this.refs.view);
-    $(view).append(this.props.dom);
+    $(view).append(build(this.props.dom, this.props.dispatch));
   }
 
   render() {

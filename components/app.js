@@ -3,7 +3,6 @@ import Editor from './editor';
 import { createRedux, createDispatcher, composeStores } from 'redux';
 import { Provider } from 'redux/react';
 
-import builder from './builder';
 import * as stores from '../reducers/index';
 import {addVersion} from '../actions/version';
 import {frame, reset} from '../actions/state';
@@ -41,7 +40,6 @@ redux = createRedux(dispatcher);
 export default class App extends Component {
 
   componentWillMount() {
-    window._ = builder(redux.dispatch);
     redux.dispatch(addVersion(counter));
     redux.dispatch(reset());
   }

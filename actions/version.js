@@ -5,10 +5,12 @@ import {
   SWAP_VERSION
 } from './types';
 
-import {parse} from 'esprima';
+import {parse} from 'esprima-fb';
 import {analyze} from 'escope';
-import {replace} from 'estraverse';
+import {replace} from 'estraverse-fb';
 import {generate} from 'escodegen';
+
+import {compileJSX} from '../builder';
 import {refresh} from './state';
 
 export function changeReqest(source) {
@@ -19,7 +21,7 @@ export function changeReqest(source) {
 }
 
 function read(src) {
-  return parse(`(function(){\n"use strict";\nvar _;\n${src} })`, {
+  return parse(`(function(){\n"use strict";\n${src} })`, {
     loc: true,
     range: true
   });
@@ -39,7 +41,7 @@ function check(ast) {
   if (!inner.variables.some((v) => v.name === 'render' &&
                                    v.defs.length === 1 &&
                                    v.defs[0].type === 'FunctionName')) {
-    throw new Error('Expected a single render function');
+    throw new Error('Expected a "render" function');
   }
   return {ast, scopeManager};
 }
@@ -53,7 +55,7 @@ function stateVar(identifier) {
       computed: false,
       object: {
         type: 'Identifier',
-        name: 'window'
+        name: 'GLOBAL'
       },
       property: {
         type: 'Identifier',
@@ -107,32 +109,6 @@ function returnRenderInit() {
   };
 }
 
-function importT(t) {
-  return {
-    type: 'VariableDeclaration',
-    declarations: [{
-      type: 'VariableDeclarator',
-      id: {
-        type: 'Identifier',
-        name: t
-      },
-      init: {
-        type: 'MemberExpression',
-        computed: false,
-        object: {
-          type: 'Identifier',
-          name: 'window'
-        },
-        property: {
-          type: 'Identifier',
-          name: t
-        }
-      }
-    }],
-    kind: 'var'
-  };
-}
-
 function rewrite({ast, scopeManager}) {
   let scope = scopeManager.globalScope;
   const inner = scopeManager.globalScope.childScopes[0];
@@ -146,11 +122,14 @@ function rewrite({ast, scopeManager}) {
         scope = scopeManager.acquire(node);
       }
       if (node.type === 'VariableDeclaration' && scope === inner) {
-        if (node.declarations[0].id.name === '_') {
-          return importT('_');
-        }
         init = init.concat(node.declarations);
         return this.remove();
+      }
+      if (node.type === 'JSXElement') {
+        return compileJSX(node);
+      }
+      if (node.type === 'JSXExpressionContainer') {
+        return node.expression;
       }
       return node;
     },
@@ -174,10 +153,11 @@ function rewrite({ast, scopeManager}) {
   });
 }
 
-export function addVersion(source) {
+export function addVersion(source, global) {
   return () => {
     try {
       const ast = rewrite(check(read(source)));
+      var GLOBAL = (typeof window !== 'undefined' ? window : global);
       const [init, render] = eval(generate(ast))();
       return {
         type: ADD_VERSION,
