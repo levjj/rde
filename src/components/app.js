@@ -1,18 +1,13 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'redux/react';
 import { PageHeader, Row, Col, Panel, Button, Glyphicon, Input } from 'react-bootstrap';
-import AceEditor from 'react-ace/src/ace.jsx';
-
-require('brace/mode/javascript');
-require('brace/theme/eclipse');
-
 import { flappy, counter } from '../examples';
 import LiveView from './liveview';
-import { addVersion, changeReqest, swapVersion } from '../actions/version';
+import Editor from './editor';
+import { addVersion, swapVersion } from '../actions/version';
 import { reset, swapState, toggleActive } from '../actions/state';
 
 @connect(state => ({
-  source: state.version.source,
   dom: state.state.dom,
   request: state.version.request,
   versionError: state.version.error,
@@ -23,9 +18,8 @@ import { reset, swapState, toggleActive } from '../actions/state';
   maxState: state.state.states.length - 1,
   isActive: state.state.isActive
 }))
-export default class Editor extends Component {
+export default class App extends Component {
   static propTypes = {
-    source: PropTypes.string,
     dom: PropTypes.any,
     request: PropTypes.any,
     versionError: PropTypes.any,
@@ -36,24 +30,6 @@ export default class Editor extends Component {
     currState: PropTypes.number.isRequired,
     maxState: PropTypes.number.isRequired,
     isActive: PropTypes.bool.isRequired
-  }
-
-  componentDidMount() {
-    this.hasMounted = true;
-  }
-
-  componentWillUpdate() {
-    this.hasMounted = false;
-  }
-
-  componentDidUpdate() {
-    this.hasMounted = true;
-  }
-
-  onChange(newSource) {
-    if (this.hasMounted && newSource !== this.props.source) {
-      this.props.dispatch(changeReqest(newSource));
-    }
   }
 
   onChangeVersion(e) {
@@ -78,12 +54,55 @@ export default class Editor extends Component {
     this.props.dispatch(reset());
   }
 
-  onAceLoad(editor) {
-    editor.getSession().setTabSize(2);
+  loadFloppy(evt) {
+    evt.preventDefault();
+    this.props.dispatch(addVersion(flappy));
+    this.props.dispatch(reset());
+  }
+
+  loadCounter(evt) {
+    evt.preventDefault();
+    this.props.dispatch(addVersion(counter));
+    this.props.dispatch(reset());
+  }
+
+  sourceHeader() {
+    return (<span>
+          Source
+          <span className="pull-right">
+            <Button bsSize="small"
+               onClick={::this.loadCounter}>
+              Counter Example
+            </Button>
+            {' '}
+            <Button bsSize="small"
+               onClick={::this.loadFloppy}>
+              Floppy Bird Example
+            </Button>
+          </span>
+        </span>);
+  }
+
+  versionStyle() {
+    const { request, versionError } = this.props;
+    if (request) return 'warning';
+    return versionError ? 'danger' : 'success';
+  }
+
+  versionFooter() {
+    return this.props.versionError && this.props.versionError.toString();
+  }
+
+  stateStyle() {
+    return this.props.stateError ? 'danger' : undefined;
+  }
+
+  stateFooter() {
+    return this.props.stateError && this.props.stateError.toString();
   }
 
   render() {
-    const { source, dom, dispatch, currVersion, maxVersion, currState, maxState, isActive } = this.props;
+    const { dom, dispatch, currVersion, maxVersion, currState, maxState, isActive } = this.props;
     return (
       <Row>
         <Col xs={12}>
@@ -91,15 +110,7 @@ export default class Editor extends Component {
         </Col>
         <Col xs={6}>
           <Panel header={this.sourceHeader()} bsStyle={this.versionStyle()} footer={this.versionFooter()}>
-            <AceEditor mode="javascript"
-                      theme="eclipse"
-                      name="ace"
-                      height="40em"
-                      width="100%"
-                      fontSize={14}
-                      value={source}
-                      onChange={::this.onChange}
-                      onLoad={::this.onAceLoad}/>
+            <Editor />
           </Panel>
         </Col>
         <Col xs={6}>
@@ -168,52 +179,5 @@ export default class Editor extends Component {
         </Col>
       </Row>
     );
-  }
-
-  loadFloppy(evt) {
-    evt.preventDefault();
-    this.props.dispatch(addVersion(flappy));
-    this.props.dispatch(reset());
-  }
-
-  loadCounter(evt) {
-    evt.preventDefault();
-    this.props.dispatch(addVersion(counter));
-    this.props.dispatch(reset());
-  }
-
-  sourceHeader() {
-    return (<span>
-          Source
-          <span className="pull-right">
-            <Button bsSize="small"
-               onClick={::this.loadCounter}>
-              Counter Example
-            </Button>
-            {' '}
-            <Button bsSize="small"
-               onClick={::this.loadFloppy}>
-              Floppy Bird Example
-            </Button>
-          </span>
-        </span>);
-  }
-
-  versionStyle() {
-    const { request, versionError } = this.props;
-    if (request) return 'warning';
-    return versionError ? 'danger' : 'success';
-  }
-
-  versionFooter() {
-    return this.props.versionError && this.props.versionError.toString();
-  }
-
-  stateStyle() {
-    return this.props.stateError ? 'danger' : undefined;
-  }
-
-  stateFooter() {
-    return this.props.stateError && this.props.stateError.toString();
   }
 }

@@ -8,13 +8,10 @@ import {
   TOGGLE_ACTIVE
 } from '../actions/types';
 
-import $ from 'jquery';
-
 const initialState = {
   states: [],
   current: 0,
   dom: '',
-  frameHandlers: [],
   error: null,
   isActive: true
 };
@@ -27,13 +24,21 @@ export function currentState(state) {
   return states[current];
 }
 
+export function getFrameHandlers(state) {
+  function rec(d) {
+    if (typeof d !== 'object') return [];
+    const fh = d.attributes.onframe ? [d.attributes.onframe] : [];
+    return d.children.reduce((res, child) => [...res, ...rec(child)], fh);
+  }
+  return rec(state.state.dom);
+}
+
 function resetState(state, action) {
   return {
     ...state,
     states: [action.state],
     current: 0,
-    dom: action.dom,
-    frameHandlers: $(action.dom).data('frame-handlers') || []
+    dom: action.dom
   };
 }
 
@@ -42,8 +47,7 @@ function swapState(state, action) {
   return {
     ...state,
     current: action.idx,
-    dom: action.dom,
-    frameHandlers: $(action.dom).data('frame-handlers') || []
+    dom: action.dom
   };
 }
 
@@ -67,8 +71,7 @@ function eventHandled(state, action) {
     ...state,
     states: [...pastStates, action.state],
     current: pastStates.length,
-    dom: action.dom,
-    frameHandlers: $(action.dom).data('frame-handlers') || []
+    dom: action.dom
   };
 }
 

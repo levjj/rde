@@ -6,7 +6,7 @@ function click() {
 
 function render() {
   return (<div>
-    <h1>Demo</h1>,
+    <h1>Demo</h1>
     <p>Count: {i}</p>
     <button onclick={click}>Click me</button>
   </div>);
@@ -17,7 +17,7 @@ var y = 100; // bird altitude
 var vy = -10; // bird vertical speed
 
 function scroll() {
-  bgStep++;;
+  bgStep++;
   if (bgStep > 288) {
     bgStep = 0;
   }
@@ -39,26 +39,27 @@ function click() {
 function background() {
   return (
     <div className="background" onframe={scroll} style={{
-      "height": "384px",
-      "background-position-x": -bgStep + "px",
-      "background-image": "url(http://flappycreator.com/default/bg.png)"
+      height: "384px",
+      backgroundPositionX: -bgStep + "px",
+      backgroundImage: "url(http://flappycreator.com/default/bg.png)"
     }} />);
 }
 
 function bird() {
   return (
     <div className="bird" onframe={update} style={{
-      "height": "26px",
-      "width": "36px",
-      "left": "40px";
-      "top": (y - 384) + "px"
-      "background-image": "url(http://flappycreator.com/default/bird_sing.png)";
+      position: "relative",
+      height: "26px",
+      width: "36px",
+      left: "40px",
+      top: (y - 384) + "px",
+      backgroundImage: "url(http://flappycreator.com/default/bird_sing.png)"
     }} />);
 }
 
 function render() {
   return (
-    <div onclick={click}>
+    <div onmousedown={click}>
       {background()}
       {bird()}
     </div>);

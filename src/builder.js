@@ -63,6 +63,7 @@ const eventKeys = [
   'onwaiting'];
 
 export function compileJSX(node) {
+  if (node.type !== 'JSXElement') return node;
   const name = node.openingElement.name.name;
   const attributes = [];
   for (const attr of node.openingElement.attributes) {
@@ -120,13 +121,14 @@ function wrapHandler(dispatch, func) {
 }
 
 export function build(dom, dispatch) {
+  if (typeof dom !== 'object') {
+    return $(`<span>${dom}</span>`);
+  }
   const el = $(`<${dom.name}></${dom.name}>`);
-  let frameHandlers = [];
-  Object.keys(dom.attributes).forEach((key, value) => {
+  Object.keys(dom.attributes).forEach((key) => {
+    const value = dom.attributes[key];
     if (key === 'style' && typeof value === 'object') {
       el.css(value);
-    } else if (key === 'onframe') {
-      frameHandlers.push(wrapHandler(dispatch, value));
     } else if (eventKeys.indexOf(key) >= 0) {
       el.on(key.substr(2), wrapHandler(dispatch, value));
     } else {
@@ -134,10 +136,7 @@ export function build(dom, dispatch) {
     }
   });
   for (const childDom of dom.children) {
-    const child = build(childDom, dispatch);
-    el.append(child);
-    frameHandlers = [...frameHandlers, ...child.data('frame-handlers')];
+    el.append(build(childDom, dispatch));
   }
-  el.data('frame-handlers', frameHandlers);
   return el;
 }

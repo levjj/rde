@@ -1,8 +1,8 @@
 /* globals describe, it */
 import {expect} from 'chai';
 
-import {ADD_VERSION, ADD_VERSION_FAILED} from '../actions/types';
-import {addVersion} from '../actions/version';
+import {ADD_VERSION, ADD_VERSION_FAILED} from '../src/actions/types';
+import {addVersion} from '../src/actions/version';
 
 function shouldFail(src) {
   const action = addVersion(src)();
@@ -39,30 +39,48 @@ describe('rewriting', () => {
     expect(render()).to.be.equal(1);
   });
 
-  it('should compile JSX', () => {
-    let [, render] = rewrite('function render() { return <a />; }');
+  it('should compile simple JSX', () => {
+    const [, render] = rewrite('function render() { return <a />; }');
     expect(render()).to.deep.equal({
       name: 'a',
       attributes: {},
       children: []
     });
-    [, render] = rewrite('function render() { return <a x="f" />; }');
+  });
+
+  it('should supports attributes', () => {
+    const [, render] = rewrite('function render() { return <a x="f" />; }');
     expect(render()).to.deep.equal({
       name: 'a',
       attributes: {x: 'f'},
       children: []
     });
-    [, render] = rewrite('function render() { return <a x={"f"} />; }');
+  });
+
+  it('should supports JavaScript as attributes', () => {
+    const [, render] = rewrite('function render() { return <a x={"f"} />; }');
     expect(render()).to.deep.equal({
       name: 'a',
       attributes: {x: 'f'},
       children: []
     });
-    [, render] = rewrite('function render() { return <a><b /></a>; }');
+  });
+
+  it('should support child elements', () => {
+    const [, render] = rewrite('function render() { return <a><b /></a>; }');
     expect(render()).to.deep.equal({
       name: 'a',
       attributes: {},
       children: [{name: 'b', attributes: {}, children: []}]
+    });
+  });
+
+  it('should support JavaScript as child element', () => {
+    const [, render] = rewrite('function render() { return <a>{"foo"}</a>; }');
+    expect(render()).to.deep.equal({
+      name: 'a',
+      attributes: {},
+      children: ['foo']
     });
   });
 });

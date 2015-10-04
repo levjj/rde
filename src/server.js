@@ -1,6 +1,7 @@
+/* eslint no-var:0 */
 var webpack = require('webpack');
 var WebpackDevServer = require('webpack-dev-server');
-var config = require('./webpack.config');
+var config = require('../webpack.config');
 
 var app = new WebpackDevServer(webpack(config), {
   publicPath: config.output.publicPath,
@@ -11,7 +12,8 @@ var app = new WebpackDevServer(webpack(config), {
   }
 });
 
-app.listen(3000, 'localhost', function (err) {
+app.listen(3000, 'localhost', function onstart(err) {
+  /* eslint no-console:0 */
   if (err) {
     console.log(err);
   }

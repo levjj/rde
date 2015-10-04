@@ -4,7 +4,7 @@
   "description": "Reactive Debugger Environment",
   "main": "server.js",
   "scripts": {
-    "start": "NODE_ENV=\"development\" node server.js",
+    "start": "NODE_ENV=\"development\" node src/server.js",
     "build": "node ./node_modules/webpack/bin/webpack.js --verbose --colors --display-error-details --config webpack.config.js",
     "test": "mocha --compilers js:babel/register test/*"
   },
@@ -16,6 +16,7 @@
   "homepage": "https://github.com/levjj/rde",
   "dependencies": {
     "babel-loader": "5.1.4",
+    "bootstrap": "^3.3.5",
     "brace": "^0.5.1",
     "clone": "^1.0.2",
     "deep-freeze": "0.0.1",
@@ -38,10 +39,15 @@
   "devDependencies": {
     "babel-eslint": "^4.0.5",
     "chai": "^3.3.0",
+    "css-loader": "^0.19.0",
     "eslint": "^1.0.0",
     "eslint-config-airbnb": "0.0.7",
     "eslint-plugin-react": "^3.1.0",
+    "extract-text-webpack-plugin": "^0.8.2",
+    "file-loader": "^0.8.4",
     "mocha": "^2.3.3",
-    "node-libs-browser": "^0.5.2"
+    "node-libs-browser": "^0.5.2",
+    "style-loader": "^0.12.4",
+    "url-loader": "^0.5.6"
   }
 }

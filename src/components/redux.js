@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import Editor from './editor';
+import App from './app';
 import { createRedux, createDispatcher, composeStores } from 'redux';
 import { Provider } from 'redux/react';
 
@@ -37,7 +37,7 @@ const dispatcher = createDispatcher(store, (getState) => [middleware(getState)])
 
 redux = createRedux(dispatcher);
 
-export default class App extends Component {
+export default class Redux extends Component {
 
   componentWillMount() {
     redux.dispatch(addVersion(counter));
@@ -51,7 +51,7 @@ export default class App extends Component {
   render() {
     return (
       <Provider redux={redux}>
-        {() => <Editor />}
+        {() => <App />}
       </Provider>
     );
   }

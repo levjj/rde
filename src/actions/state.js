@@ -11,7 +11,7 @@ import {
 import deepFreeze from 'deep-freeze';
 import clone from 'clone';
 
-import {currentState} from '../reducers/state';
+import {currentState, getFrameHandlers} from '../reducers/state';
 import {currentVersion} from '../reducers/version';
 
 function checkState(state) {
@@ -82,7 +82,7 @@ export function refresh(render) {
         idx: state.state.current,
         dom: renderState(render, currentState(state))
       };
-    } catch(e) {
+    } catch (e) {
       return {
         type: SWAP_STATE_FAILED,
         error: e
@@ -99,7 +99,7 @@ export function swapState(idx) {
         idx: idx,
         dom: renderCurrent(getState, getState().state.states[idx])
       };
-    } catch(e) {
+    } catch (e) {
       return {
         type: SWAP_STATE_FAILED,
         error: e
@@ -121,7 +121,7 @@ export function event() {
         state: window.state,
         dom: renderCurrent(getState, window.state)
       };
-    } catch(e) {
+    } catch (e) {
       return {
         type: EVENT_FAILED,
         error: e
@@ -132,7 +132,8 @@ export function event() {
 
 export function frame() {
   return (dispatch, getState) => {
-    const { isActive, frameHandlers } = getState().state;
+    const {isActive} = getState().state;
+    const frameHandlers = getFrameHandlers(getState());
     if (!isActive || !frameHandlers || !frameHandlers.length) {
       return { type: 'noop' };
     }
@@ -145,7 +146,7 @@ export function frame() {
         state: window.state,
         dom: renderCurrent(getState, window.state)
       };
-    } catch(e) {
+    } catch (e) {
       return {
         type: EVENT_FAILED,
         error: e
