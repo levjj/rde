@@ -40,7 +40,7 @@ function background() {
   return (
     <div className="background" onframe={scroll} style={{
       height: "384px",
-      backgroundPositionX: -bgStep + "px",
+      backgroundPosition: -bgStep + "px 0",
       backgroundImage: "url(http://flappycreator.com/default/bg.png)"
     }} />);
 }
