@@ -54,7 +54,7 @@ export default class App extends Component {
     this.props.dispatch(reset());
   }
 
-  loadFloppy(evt) {
+  loadFlappy(evt) {
     evt.preventDefault();
     this.props.dispatch(addVersion(flappy));
     this.props.dispatch(reset());
@@ -76,8 +76,8 @@ export default class App extends Component {
             </Button>
             {' '}
             <Button bsSize="small"
-               onClick={::this.loadFloppy}>
-              Floppy Bird Example
+               onClick={::this.loadFlappy}>
+              Flappy Bird Example
             </Button>
           </span>
         </span>);
