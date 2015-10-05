@@ -12,7 +12,8 @@ module.exports = {
   ],
   output: {
     path: path.join(__dirname, 'static'),
-    filename: 'bundle.js'
+    filename: 'bundle.js',
+    publicPath: build ? '' : '/static/'
   },
   plugins: build ? [new ExtractTextPlugin('style.css', {allChunks: true})] : [
     new ExtractTextPlugin('style.css', {allChunks: true}),
