@@ -45,7 +45,7 @@ export default class Redux extends Component {
   }
 
   componentDidMount() {
-    setInterval(() => redux.dispatch(frame()), 50);
+    setInterval(() => redux.dispatch(frame()), 25);
   }
 
   render() {

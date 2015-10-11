@@ -30,9 +30,10 @@ function read(src) {
 function check(ast) {
   const scopeManager = analyze(ast);
   const globalScope = scopeManager.globalScope;
-  if (globalScope.through.length) {
-    const r1 = globalScope.through[0];
-    throw new ReferenceError(`${r1.identifier.name} is not defined`);
+  for (const {identifier: {name: global}} of globalScope.through) {
+    if (global !== 'Math') {
+      throw new ReferenceError(`${global} is not defined`);
+    }
   }
   const inner = globalScope.childScopes[0];
   if (inner.thisFound) {
@@ -136,7 +137,7 @@ function rewrite({ast, scopeManager}) {
     leave: function leave(node) {
       if (node.type === 'Identifier' && node.name !== '_') {
         const ref = scope.resolve(node);
-        if (ref && ref.resolved.scope === inner &&
+        if (ref && ref.resolved && ref.resolved.scope === inner &&
             !(ref.resolved.defs[0].type === 'FunctionName')) {
           return stateVar(node);
         }
