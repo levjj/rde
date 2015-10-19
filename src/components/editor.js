@@ -13,6 +13,7 @@ import { changeReqest } from '../actions/version';
 export default class Editor extends Component {
   static propTypes = {
     source: PropTypes.string,
+    showLineNumbers: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired
   }
 
@@ -40,6 +41,7 @@ export default class Editor extends Component {
 
   onAceLoad(editor) {
     editor.getSession().setTabSize(2);
+    editor.renderer.setShowGutter(this.props.showLineNumbers);
   }
 
   render() {
@@ -47,7 +49,7 @@ export default class Editor extends Component {
       <AceEditor mode="jsx"
                  theme="eclipse"
                  name="ace"
-                 height="40em"
+                 height="68vh"
                  width="100%"
                  fontSize={14}
                  value={this.props.source}

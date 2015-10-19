@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import App from './app';
 import { createRedux, createDispatcher, composeStores } from 'redux';
 import { Provider } from 'redux/react';
+import $ from 'jquery';
 
 import * as stores from '../reducers/index';
 import {addVersion} from '../actions/version';
@@ -37,10 +38,25 @@ const dispatcher = createDispatcher(store, (getState) => [middleware(getState)])
 
 redux = createRedux(dispatcher);
 
+const params = (() => {
+  const raw = window.location.href.match(/#(.*)$/);
+  if (!raw) return {};
+  const props = raw[1].split(/,/);
+  const src = props.reduce((acc, p) => acc || p.startsWith('src=') && p, false);
+  return {
+    src: src && decodeURIComponent(src.split(/=/)[1]),
+    isDemo: props.indexOf('demo') >= 0,
+    hideTime: props.indexOf('notime') >= 0
+  };
+})();
+
 export default class Redux extends Component {
 
   componentWillMount() {
-    redux.dispatch(addVersion(counter));
+    if (params.isDemo) {
+      $('#banner').remove();
+    }
+    redux.dispatch(addVersion(params.src || counter));
     redux.dispatch(reset());
   }
 
@@ -51,7 +67,8 @@ export default class Redux extends Component {
   render() {
     return (
       <Provider redux={redux}>
-        {() => <App />}
+        {() => <App isDemo={params.isDemo}
+                    showTimeControl={!params.hideTime} />}
       </Provider>
     );
   }

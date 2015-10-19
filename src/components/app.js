@@ -1,6 +1,7 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'redux/react';
 import { PageHeader, Row, Col, Panel, Button, Glyphicon, Input } from 'react-bootstrap';
+
 import { flappy, counter } from '../examples';
 import LiveView from './liveview';
 import Editor from './editor';
@@ -29,7 +30,12 @@ export default class App extends Component {
     maxVersion: PropTypes.number.isRequired,
     currState: PropTypes.number.isRequired,
     maxState: PropTypes.number.isRequired,
-    isActive: PropTypes.bool.isRequired
+    isActive: PropTypes.bool.isRequired,
+    isDemo: PropTypes.bool.isRequired,
+    showTimeControl: PropTypes.bool.isRequired
+  }
+
+  componentWillMount() {
   }
 
   onChangeVersion(e) {
@@ -69,17 +75,18 @@ export default class App extends Component {
   sourceHeader() {
     return (<span>
           Source
-          <span className="pull-right">
-            <Button bsSize="small"
-               onClick={::this.loadCounter}>
-              Counter Example
-            </Button>
-            {' '}
-            <Button bsSize="small"
-               onClick={::this.loadFlappy}>
-              Flappy Bird Example
-            </Button>
-          </span>
+          {!this.props.isDemo && (
+            <span className="pull-right">
+              <Button bsSize="small"
+                onClick={::this.loadCounter}>
+                Counter Example
+              </Button>
+              {' '}
+              <Button bsSize="small"
+                onClick={::this.loadFlappy}>
+                Flappy Bird Example
+              </Button>
+            </span>)}
         </span>);
   }
 
@@ -102,18 +109,20 @@ export default class App extends Component {
   }
 
   render() {
-    const { dom, dispatch, currVersion, maxVersion, currState, maxState, isActive } = this.props;
+    const { dom, dispatch, currVersion, maxVersion, currState, maxState, isActive, isDemo, showTimeControl } = this.props;
     return (
       <Row>
-        <Col xs={12}>
-          <PageHeader>Reactive Live Programming</PageHeader>
-        </Col>
+        {!isDemo && (
+          <Col xs={12}>
+            <PageHeader>Reactive Live Programming</PageHeader>
+          </Col>)}
         <Col xs={6}>
           <Panel header={this.sourceHeader()} bsStyle={this.versionStyle()} footer={this.versionFooter()}>
-            <Editor />
+            <Editor showLineNumbers={!isDemo} />
           </Panel>
         </Col>
         <Col xs={6}>
+          {showTimeControl && (
           <Panel header="Time Control">
             <Row>
               <Col xs={2}>
@@ -172,7 +181,7 @@ export default class App extends Component {
                 </Button>
               </Col>
             </Row>
-          </Panel>
+          </Panel>)}
           <Panel header="Live View" bsStyle={this.stateStyle()} footer={this.stateFooter()}>
             <LiveView dom={dom} dispatch={dispatch} />
           </Panel>
