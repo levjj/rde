@@ -144,12 +144,18 @@ export default class App extends Component {
                     max={maxVersion + 1} />
               </Col>
               <Col xs={3}>
-                <Button onClick={::this.onOpen} bsSize="small">
-                  <Glyphicon glyph="folder-open" />
-                </Button>
-                <Button onClick={::this.onSave} bsSize="small">
-                  <Glyphicon glyph="floppy-disk" />
-                </Button>
+                {!isDemo &&
+                  <Button onClick={::this.onOpen} bsSize="small">
+                    <Glyphicon glyph="folder-open" />
+                  </Button>}
+                {!isDemo &&
+                  <Button onClick={::this.onSave} bsSize="small">
+                    <Glyphicon glyph="floppy-disk" />
+                  </Button>}
+                {isDemo &&
+                  <Button onClick={::this.onReset} bsSize="small">
+                    <Glyphicon glyph="repeat" />
+                  </Button>}
               </Col>
             </Row>
             <hr />
@@ -176,9 +182,10 @@ export default class App extends Component {
                 <Button onClick={::this.onToggle} bsSize="small">
                   <Glyphicon glyph={isActive ? 'pause' : 'play'} />
                 </Button>
-                <Button onClick={::this.onReset} bsSize="small">
-                  <Glyphicon glyph="repeat" />
-                </Button>
+                {!isDemo &&
+                  <Button onClick={::this.onReset} bsSize="small">
+                    <Glyphicon glyph="repeat" />
+                  </Button>}
               </Col>
             </Row>
           </Panel>)}
