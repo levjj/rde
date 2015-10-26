@@ -19,6 +19,7 @@
     "bootstrap": "^3.3.5",
     "brace": "^0.5.1",
     "clone": "^1.0.2",
+    "component-file-picker": "^0.2.1",
     "deep-freeze": "0.0.1",
     "escodegen": "^1.6.1",
     "escope": "^3.2.0",

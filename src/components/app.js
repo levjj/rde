@@ -1,6 +1,8 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'redux/react';
 import { PageHeader, Row, Col, Panel, Button, Glyphicon, Input } from 'react-bootstrap';
+import $ from 'jquery';
+import filePicker from 'component-file-picker';
 
 import { flappy, counter } from '../examples';
 import LiveView from './liveview';
@@ -17,7 +19,8 @@ import { reset, swapState, toggleActive } from '../actions/state';
   maxVersion: state.version.versions.length - 1,
   currState: state.state.current,
   maxState: state.state.states.length - 1,
-  isActive: state.state.isActive
+  isActive: state.state.isActive,
+  source: state.version.source
 }))
 export default class App extends Component {
   static propTypes = {
@@ -25,14 +28,15 @@ export default class App extends Component {
     request: PropTypes.any,
     versionError: PropTypes.any,
     stateError: PropTypes.any,
-    dispatch: PropTypes.func.isRequired,
     currVersion: PropTypes.number.isRequired,
     maxVersion: PropTypes.number.isRequired,
     currState: PropTypes.number.isRequired,
     maxState: PropTypes.number.isRequired,
     isActive: PropTypes.bool.isRequired,
     isDemo: PropTypes.bool.isRequired,
-    showTimeControl: PropTypes.bool.isRequired
+    showTimeControl: PropTypes.bool.isRequired,
+    source: PropTypes.string,
+    dispatch: PropTypes.func.isRequired
   }
 
   componentWillMount() {
@@ -51,9 +55,28 @@ export default class App extends Component {
   }
 
   onOpen() {
+    /* eslint no-alert:0 */
+    filePicker({accept: ['.js']}, ([file]) => {
+      if (file === undefined) return alert('No file selected');
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.result === undefined) return alert('No file contents');
+        this.props.dispatch(addVersion(reader.result));
+      };
+      reader.readAsText(file);
+    });
   }
 
   onSave() {
+    const src = encodeURIComponent(this.props.source);
+    const a = $('<a>')
+    .attr({
+      href: 'data:text/plain;charset=utf-8,' + src,
+      download: 'code.js'
+    })
+    .appendTo($('body'));
+    a[0].click();
+    a.remove();
   }
 
   onReset() {
