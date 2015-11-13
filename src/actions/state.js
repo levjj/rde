@@ -40,7 +40,7 @@ function renderState(render, state) {
     return render();
   } catch (e) {
     if (e instanceof TypeError) {
-      throw new Error('render() needs to be a pure function!');
+      throw new TypeError('render() needs to be a pure function!');
     }
     throw e;
   } finally {

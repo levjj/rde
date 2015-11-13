@@ -109,7 +109,7 @@ export function compileJSX(node) {
   ]};
 }
 
-function wrapHandler(dispatch, func) {
+export function wrapHandler(dispatch, func) {
   return function handler() {
     try {
       window.state = clone(window.state);

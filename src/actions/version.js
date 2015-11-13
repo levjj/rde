@@ -56,7 +56,7 @@ function stateVar(identifier) {
       computed: false,
       object: {
         type: 'Identifier',
-        name: 'GLOBAL'
+        name: 'window'
       },
       property: {
         type: 'Identifier',
@@ -154,11 +154,10 @@ function rewrite({ast, scopeManager}) {
   });
 }
 
-export function addVersion(source, global) {
+export function addVersion(source) {
   return () => {
     try {
       const ast = rewrite(check(read(source)));
-      var GLOBAL = (typeof window !== 'undefined' ? window : global);
       const [init, render] = eval(generate(ast))();
       return {
         type: ADD_VERSION,

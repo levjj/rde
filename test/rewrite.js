@@ -1,20 +1,7 @@
 /* globals describe, it */
 import {expect} from 'chai';
 
-import {ADD_VERSION, ADD_VERSION_FAILED} from '../src/actions/types';
-import {addVersion} from '../src/actions/version';
-
-function shouldFail(src) {
-  const action = addVersion(src)();
-  expect(action.type).to.be.equal(ADD_VERSION_FAILED);
-}
-
-function rewrite(src, global = {}) {
-  const action = addVersion(src, global)();
-  if (action.error) console.error(action.error, action.error.stack);
-  expect(action.type).to.be.equal(ADD_VERSION);
-  return [action.init, action.render];
-}
+import {shouldFail, rewrite} from './helpers';
 
 describe('rewriting', () => {
   it('rejects invalid programs', () => {
@@ -31,11 +18,11 @@ describe('rewriting', () => {
 
   it('should rewrite state accesses', () => {
     const src = 'var i = 1; function render() { return i; }';
-    const state = {};
-    const [init, render] = rewrite(src, {state});
-    expect(state).to.deep.equal({});
+    window.state = {};
+    const [init, render] = rewrite(src);
+    expect(window.state).to.deep.equal({});
     init();
-    expect(state).to.deep.equal({i: 1});
+    expect(window.state).to.deep.equal({i: 1});
     expect(render()).to.be.equal(1);
   });
 
