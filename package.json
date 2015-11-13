@@ -6,7 +6,7 @@
   "scripts": {
     "start": "NODE_ENV=\"development\" node --harmony src/server.js",
     "build": "node ./node_modules/webpack/bin/webpack.js --verbose --colors --display-error-details --config webpack.config.js",
-    "test": "mocha --harmony --compilers js:babel/register test/*"
+    "test": "mocha --harmony --compilers js:babel-core/register test/*"
   },
   "repository": {
     "type": "git",
