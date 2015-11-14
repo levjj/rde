@@ -8,44 +8,13 @@ import {
   TOGGLE_ACTIVE
 } from './types';
 
-import deepFreeze from 'deep-freeze';
-import clone from 'clone';
-
 import {currentState, getFrameHandlers} from '../reducers/state';
 import {currentVersion} from '../reducers/version';
-
-function checkState(state) {
-  const ws = new WeakSet();
-  function c(o) {
-    if (typeof o === 'function') {
-      throw new Error('Functions not allowed in state');
-    }
-    if (typeof o !== 'object') return;
-    ws.add(o);
-    Object.getOwnPropertyNames(o).forEach((prop) => {
-      if (o.hasOwnProperty(prop) &&
-          o[prop] !== null &&
-          !ws.has(o[prop])) {
-        c(o[prop]);
-      }
-    });
-  }
-  c(state);
-}
+import strategy from '../strategy';
 
 function renderState(render, state) {
   if (!render || !state) return '';
-  window.state = deepFreeze(clone(state));
-  try {
-    return render();
-  } catch (e) {
-    if (e instanceof TypeError) {
-      throw new TypeError('render() needs to be a pure function!');
-    }
-    throw e;
-  } finally {
-    window.state = state;
-  }
+  return strategy.render(render, state);
 }
 
 function renderCurrent(getState, state) {
@@ -55,14 +24,12 @@ function renderCurrent(getState, state) {
 export function reset() {
   return (dispatch, getState) => {
     const {init} = currentVersion(getState());
-    window.state = {};
     try {
-      init();
-      checkState(window.state);
+      const state = strategy.handle(() => init(), {});
       return {
         type: RESET_STATE,
-        state: window.state,
-        dom: renderCurrent(getState, window.state)
+        state,
+        dom: renderCurrent(getState, state)
       };
     } catch (e) {
       return {
@@ -108,18 +75,17 @@ export function swapState(idx) {
   };
 }
 
-export function event() {
+export function event(handler) {
   return (dispatch, getState) => {
     if (!getState().state.isActive) {
-      window.state = currentState(getState());
       return { type: 'noop' };
     }
     try {
-      checkState(window.state);
+      const state = strategy.handle(handler, currentState(getState()));
       return {
         type: EVENT_HANDLED,
-        state: window.state,
-        dom: renderCurrent(getState, window.state)
+        state,
+        dom: renderCurrent(getState, state)
       };
     } catch (e) {
       return {
@@ -138,13 +104,12 @@ export function frame() {
       return { type: 'noop' };
     }
     try {
-      window.state = clone(window.state);
-      frameHandlers.forEach(h => h());
-      checkState(window.state);
+      const handler = () => frameHandlers.forEach(h => h());
+      const state = strategy.handle(handler, currentState(getState()));
       return {
         type: EVENT_HANDLED,
-        state: window.state,
-        dom: renderCurrent(getState, window.state)
+        state,
+        dom: renderCurrent(getState, state)
       };
     } catch (e) {
       return {

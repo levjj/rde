@@ -1,5 +1,4 @@
 import $ from 'jquery';
-import clone from 'clone';
 
 import {event} from './actions/state';
 
@@ -111,12 +110,7 @@ export function compileJSX(node) {
 
 export function wrapHandler(dispatch, func) {
   return function handler() {
-    try {
-      window.state = clone(window.state);
-      return func.apply(this, arguments);
-    } finally {
-      dispatch(event());
-    }
+    dispatch(event(() => func.apply(this, arguments)));
   };
 }
 

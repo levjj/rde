@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "NODE_ENV=\"development\" node --harmony src/server.js",
+    "lint": "eslint src test",
     "build": "node ./node_modules/webpack/bin/webpack.js --verbose --colors --display-error-details --config webpack.config.js",
     "test": "mocha --harmony --compilers js:babel-core/register test/*"
   },
@@ -41,13 +42,14 @@
     "babel-eslint": "^4.0.5",
     "chai": "^3.3.0",
     "css-loader": "^0.19.0",
-    "eslint": "^1.0.0",
-    "eslint-config-airbnb": "0.0.7",
+    "eslint": "^1.9.0",
+    "eslint-config-airbnb": "^1.0.0",
     "eslint-plugin-react": "^3.1.0",
     "extract-text-webpack-plugin": "^0.8.2",
     "file-loader": "^0.8.4",
     "mocha": "^2.3.3",
     "node-libs-browser": "^0.5.2",
+    "regenerator": "^0.8.42",
     "style-loader": "^0.12.4",
     "url-loader": "^0.5.6"
   }
