@@ -1,6 +1,8 @@
 import deepFreeze from 'deep-freeze';
 import clone from 'clone';
 
+import {immutable, lazyFirstOrder, cow} from './proxies';
+
 function checkState(state) {
   const ws = new WeakSet();
   function c(o) {
@@ -36,18 +38,29 @@ export const simple = {
         throw new TypeError('render() needs to be a pure function!');
       }
       throw e;
-    } finally {
-      window.state = state;
     }
   }
 };
 
 export const proxies = {
-
+  handle: (handle, state) => {
+    window.state = lazyFirstOrder(cow(state));
+    handle();
+    return window.state;
+  },
+  render: (render, state) => {
+    window.state = immutable(state);
+    return render();
+  }
 };
 
 export const proxy = {
 
 };
 
-export default simple;
+const current = {
+  handle: simple.handle,
+  render: simple.render
+};
+
+export default current;

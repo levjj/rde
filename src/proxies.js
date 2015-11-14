@@ -1,10 +1,10 @@
 const immutableProxies = new WeakSet();
 const immutableObjects = new WeakMap();
+import Proxy from 'harmony-proxy';
 
 export function immutable(x) {
   if (x === null ||
-      typeof x !== 'object' ||
-      typeof x !== 'function' ||
+      (typeof x !== 'object' && typeof x !== 'function') ||
       immutableProxies.has(x)) {
     return x;
   }
@@ -27,8 +27,7 @@ const lazyFirstOrderObjects = new WeakMap();
 
 export function lazyFirstOrder(x) {
   if (x === null ||
-      typeof x !== 'object' ||
-      typeof x !== 'function' ||
+      (typeof x !== 'object' && typeof x !== 'function') ||
       lazyFirstOrderProxies.has(x)) {
     return x;
   }
@@ -37,8 +36,12 @@ export function lazyFirstOrder(x) {
   }
   const proxy = new Proxy(x, {
     get: (target, key) => lazyFirstOrder(target[key]),
-    set: () => {
-      throw new TypeError('Mutation to immutable object');
+    set: (target, key, value) => {
+      target[key] = value;
+      return true;
+    },
+    apply: () => {
+      throw new TypeError('Call of a first-order value');
     }
   });
   lazyFirstOrderProxies.add(proxy);
@@ -53,8 +56,7 @@ export function cow(r) {
 
   const wrap = (x) => {
     if (x === null ||
-        typeof x !== 'object' ||
-        typeof x !== 'function' ||
+        (typeof x !== 'object' && typeof x !== 'function') ||
         cowProxies.has(x)) {
       return x;
     }
