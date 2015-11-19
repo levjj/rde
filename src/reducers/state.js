@@ -8,21 +8,14 @@ import {
   TOGGLE_ACTIVE
 } from '../actions/types';
 
+import strategy from '../strategy';
+
 const initialState = {
-  states: [],
-  current: 0,
+  current: -1,
   dom: '',
   error: null,
   isActive: true
 };
-
-export function currentState(state) {
-  const { states, current } = state.state;
-  if (current < 0 || current >= states.length) {
-    return {};
-  }
-  return states[current];
-}
 
 export function getFrameHandlers(state) {
   function rec(d) {
@@ -34,16 +27,20 @@ export function getFrameHandlers(state) {
 }
 
 function resetState(state, action) {
+  const initial = strategy.current({state: {
+    current: 0,
+    internal: state.internal
+  }});
+  const internal = strategy.add({current: -1}, initial);
   return {
     ...state,
-    states: [action.state],
+    internal,
     current: 0,
     dom: action.dom
   };
 }
 
 function swapState(state, action) {
-  window.state = state.states[action.idx];
   return {
     ...state,
     current: action.idx,
@@ -66,17 +63,15 @@ function resetStateFailed(state, action) {
 }
 
 function eventHandled(state, action) {
-  const pastStates = state.states.slice(0, state.current + 1);
   return {
     ...state,
-    states: [...pastStates, action.state],
-    current: pastStates.length,
+    internal: strategy.add(state.internal, action.state),
+    current: state.current + 1,
     dom: action.dom
   };
 }
 
 function eventFailed(state, action) {
-  window.state = currentState({code: state});
   return {
     ...state,
     isSwapping: false,
@@ -91,7 +86,7 @@ function toggleActive(state) {
   };
 }
 
-export default function code(state = initialState, action = {}) {
+export default function stateReducer(state = initialState, action = {}) {
   switch (action.type) {
   case RESET_STATE: return resetState(state, action);
   case RESET_STATE_FAILED: return resetStateFailed(state, action);

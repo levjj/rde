@@ -8,7 +8,7 @@ import {
   TOGGLE_ACTIVE
 } from './types';
 
-import {currentState, getFrameHandlers} from '../reducers/state';
+import {getFrameHandlers} from '../reducers/state';
 import {currentVersion} from '../reducers/version';
 import strategy from '../strategy';
 
@@ -47,7 +47,7 @@ export function refresh(render) {
       return {
         type: SWAP_STATE,
         idx: state.state.current,
-        dom: renderState(render, currentState(state))
+        dom: renderState(render, strategy.current(state))
       };
     } catch (e) {
       return {
@@ -81,7 +81,7 @@ export function event(handler) {
       return { type: 'noop' };
     }
     try {
-      const state = strategy.handle(handler, currentState(getState()));
+      const state = strategy.handle(handler, strategy.current(getState()));
       return {
         type: EVENT_HANDLED,
         state,
@@ -105,7 +105,7 @@ export function frame() {
     }
     try {
       const handler = () => frameHandlers.forEach(h => h());
-      const state = strategy.handle(handler, currentState(getState()));
+      const state = strategy.handle(handler, strategy.current(getState()));
       return {
         type: EVENT_HANDLED,
         state,

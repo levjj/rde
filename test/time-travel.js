@@ -1,41 +1,37 @@
 /* globals describe, before, it */
 import {expect} from 'chai';
 
-import current, {simple, proxies} from '../src/strategy';
-import {runHandler} from './helpers';
+import {EVENT_HANDLED} from '../src/actions/types';
+import strategy from '../src/strategy';
 
-function tests() {
+import {runHandlerInternal} from './helpers';
+
+export default function tests() {
   global.window = {};
 
-  it('changes to the state should not affect previous states', () => {
-    const oldState = {i: 22};
-    const {state} = runHandler(oldState, () => {
-      const j = window.state.i;
-      window.state.i = j + 1;
+  describe('time travel', () => {
+
+    it('changes to the state should not affect previous states', () => {
+      let internal = strategy.add({}, strategy.current({
+        state: {current: -1}
+      }));
+
+      let result = runHandlerInternal(internal, 0, () => window.state.i = 23);
+      expect(result.type).to.be.equal(EVENT_HANDLED);
+      internal = strategy.add({internal, current: 0}, result.state);
+
+      result = runHandlerInternal(internal, 1, () => window.state.i++);
+      expect(result.type).to.be.equal(EVENT_HANDLED);
+      internal = strategy.add({internal, current: 1}, result.state);
+
+      const oldState = strategy.current({
+        state: {internal, current: 1}
+      });
+      expect(oldState.i).to.be.equal(23);
+      const newState = strategy.current({
+        state: {internal, current: 2}
+      });
+      expect(newState.i).to.be.equal(24);
     });
-    expect(state).to.be.deep.equal({i: 23});
-    expect(oldState).to.be.deep.equal({i: 22});
   });
 }
-
-describe('time travel (simple)', () => {
-
-  before(() => {
-    current.handle = simple.handle;
-    current.render = simple.render;
-  });
-
-  tests();
-});
-
-describe('time travel (proxies)', () => {
-
-  before(() => {
-    current.handle = proxies.handle;
-    current.render = proxies.render;
-  });
-
-  tests();
-});
-
-export default function() {}

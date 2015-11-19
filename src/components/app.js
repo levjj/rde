@@ -9,6 +9,7 @@ import LiveView from './liveview';
 import Editor from './editor';
 import { addVersion, swapVersion } from '../actions/version';
 import { reset, swapState, toggleActive } from '../actions/state';
+import strategy from '../strategy';
 
 @connect(state => ({
   dom: state.state.dom,
@@ -18,7 +19,7 @@ import { reset, swapState, toggleActive } from '../actions/state';
   currVersion: state.version.current,
   maxVersion: state.version.versions.length - 1,
   currState: state.state.current,
-  maxState: state.state.states.length - 1,
+  maxState: strategy.maxState(state),
   isActive: state.state.isActive,
   source: state.version.source
 }))
@@ -33,7 +34,7 @@ export default class App extends Component {
     currState: PropTypes.number.isRequired,
     maxState: PropTypes.number.isRequired,
     isActive: PropTypes.bool.isRequired,
-    isDemo: PropTypes.bool.isRequired,
+    isDemo: PropTypes.bool,
     showTimeControl: PropTypes.bool.isRequired,
     source: PropTypes.string,
     dispatch: PropTypes.func.isRequired

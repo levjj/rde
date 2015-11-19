@@ -4,23 +4,24 @@ import {refresh} from '../src/actions/state';
 import {ADD_VERSION, ADD_VERSION_FAILED} from '../src/actions/types';
 import {addVersion} from '../src/actions/version';
 import {wrapHandler} from '../src/builder';
+import strategy from '../src/strategy';
 
 export function runRender(state, func) {
   const action = refresh(func);
   return action(null, () => ({
     state: {
-      states: [state],
+      internal: strategy.add({}, state),
       current: 0
     }
   }));
 }
 
-export function runHandler(state, func) {
+export function runHandlerInternal(internal, current, func) {
   let result;
   const dispatch = (act) => result = act(null, () => ({
     state: {
-      states: [state],
-      current: 0,
+      internal,
+      current,
       isActive: true
     },
     version: {
@@ -33,6 +34,10 @@ export function runHandler(state, func) {
   } finally {
     return result;
   }
+}
+
+export function runHandler(state, func) {
+  return runHandlerInternal(strategy.add({}, state), 0, func);
 }
 
 export function rewrite(src) {

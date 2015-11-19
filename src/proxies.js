@@ -1,6 +1,7 @@
+const Proxy = (typeof window === 'undefined' || typeof window.Proxy !== 'undefined') && require('harmony-proxy');
+
 const immutableProxies = new WeakSet();
 const immutableObjects = new WeakMap();
-import Proxy from 'harmony-proxy';
 
 export function immutable(x) {
   if (x === null ||
@@ -71,6 +72,10 @@ export function cow(r) {
         }
         return wrap(target[key]);
       },
+      has: (target, key) => {
+        const props = changes.get(target);
+        return (props && Object.hasOwnProperty.call(props, key)) || Object.hasOwnProperty.call(target, key);
+      },
       set: (target, key, value) => {
         const props = changes.get(target);
         if (props) {
@@ -79,6 +84,32 @@ export function cow(r) {
           changes.set(target, {[key]: value});
         }
         return true;
+      },
+      enumerate: (target) => function* enumerate() {
+        const props = changes.get(target);
+        const prev = [];
+        if (props) {
+          for (const k in props) {
+            yield k;
+            prev.push(k);
+          }
+        }
+        for (const k in target) {
+          if (!prev.includes(k)) {
+            yield k;
+          }
+        }
+      },
+      ownKeys: (target) => {
+        const props = changes.get(target);
+        const result = props ? Object.keys(props) : [];
+        const targetKeys = Object.keys(target);
+        for (const k in targetKeys) {
+          if (!result.includes(k)) {
+            result.push(k);
+          }
+        }
+        return result;
       }
     });
     cowProxies.add(proxy);

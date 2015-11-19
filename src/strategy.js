@@ -2,6 +2,7 @@ import deepFreeze from 'deep-freeze';
 import clone from 'clone';
 
 import {immutable, lazyFirstOrder, cow} from './proxies';
+import stateMembrane from './proxy';
 
 function checkState(state) {
   const ws = new WeakSet();
@@ -39,6 +40,22 @@ export const simple = {
       }
       throw e;
     }
+  },
+  current: ({state}) => {
+    const states = state.internal || [];
+    const current = state.current;
+    if (current < 0 || current >= states.length) {
+      return {};
+    }
+    return states[current];
+  },
+  add: (state, nextState) => {
+    const pastStates = (state.internal || []).slice(0, state.current + 1);
+    return [...pastStates, nextState];
+  },
+  maxState: ({state}) => {
+    const states = state.internal || [];
+    return states.length - 1;
   }
 };
 
@@ -51,16 +68,55 @@ export const proxies = {
   render: (render, state) => {
     window.state = immutable(state);
     return render();
-  }
+  },
+  current: simple.current,
+  add: simple.add,
+  maxState: simple.maxState
 };
 
 export const proxy = {
-
+  handle: (handle, state) => {
+    const membrane = stateMembrane(state);
+    membrane.cow();
+    window.state = membrane.getState();
+    handle();
+    return window.state;
+  },
+  render: (render, state) => {
+    const membrane = stateMembrane(state);
+    membrane.freeze();
+    window.state = membrane.getState();
+    try {
+      return render();
+    } finally {
+      membrane.unfreeze();
+    }
+  },
+  current: (state) => {
+    const current = state.state.current;
+    const membrane = stateMembrane(state.state.internal || {});
+    membrane.timeTravel(current);
+    return membrane.getState();
+  },
+  add: (state, nextState) => {
+    const membrane = stateMembrane(state.internal || {});
+    membrane.setMaxVersion(state.current);
+    return nextState;
+  },
+  maxState: ({state}) => {
+    const membrane = stateMembrane(state.internal || {});
+    return membrane.getMaxVersion();
+  }
 };
 
+const defaultStrategy = simple;
+
 const current = {
-  handle: simple.handle,
-  render: simple.render
+  handle: defaultStrategy.handle,
+  render: defaultStrategy.render,
+  current: defaultStrategy.current,
+  add: defaultStrategy.add,
+  maxState: defaultStrategy.maxState
 };
 
 export default current;
