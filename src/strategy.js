@@ -36,7 +36,6 @@ export const simple = {
       return render();
     } catch (e) {
       if (e instanceof TypeError) {
-        console.log(e.stack);
         throw new TypeError('render() needs to be a pure function!');
       }
       throw e;

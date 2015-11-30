@@ -13,23 +13,36 @@ class StateMembrane {
     this.maxVersion = -1;
   }
 
+  /**
+   * @param changes [{change: any, version: number]
+   * non-empty list of changes for a particular property
+   *
+   * version=3 means it was changed at version 4 and the current
+   * value up to including version 3 is stored in .change
+   *
+   * @return [number] index of the entry including the current
+   * value or *length of versions* if no such entry exists
+   */
   lookup(versions) {
     const lastIdx = versions.length - 1;
-    if (versions[lastIdx] <= this.version) return lastIdx;
+    // last write was for previous version -> use current value
+    if (lastIdx < 0 || versions[lastIdx].version < this.version) return lastIdx + 1;
+    // binary search
     let leftIdx = 0;
     let rightIdx = lastIdx;
     while (leftIdx + 1 < rightIdx) {
       const midIdx = 0 | (leftIdx + (leftIdx + rightIdx) / 2);
-      if (versions[midIdx] > this.version) {
-        rightIdx = midIdx;
-      } else {
+      if (versions[midIdx].version < this.version) {
         leftIdx = midIdx;
+      } else {
+        rightIdx = midIdx;
       }
     }
-    if (leftIdx < rightIdx && versions[rightIdx] <= this.version) {
+    if (leftIdx < rightIdx && versions[leftIdx].version < this.version) {
       leftIdx = rightIdx;
     }
-    return versions[leftIdx] > this.version ? -1 : leftIdx;
+    // leftIdx points to entry before
+    return leftIdx;
   }
 
   wrap(x) {
@@ -45,9 +58,9 @@ class StateMembrane {
       get: (target, key) => {
         const changes = this.changes.get(target);
         if (changes && Object.hasOwnProperty.call(changes, key)) {
-          const idx = this.lookup(changes[key][0]);
-          if (idx >= 0) {
-            return this.wrap(changes[key][1][idx]);
+          const idx = this.lookup(changes[key]);
+          if (idx < changes[key].length) {
+            return this.wrap(changes[key][idx].change);
           }
         }
         return this.wrap(target[key]);
@@ -62,20 +75,17 @@ class StateMembrane {
           this.changes.set(target, objChanges);
         }
         if (!Object.hasOwnProperty.call(objChanges, key)) {
-          objChanges[key] = [[], []];
+          objChanges[key] = [];
         }
-        const [versions, data] = objChanges[key];
+        const versions = objChanges[key];
         const idx = this.lookup(versions);
         if (versions.length >= 0 && idx < versions.length - 1) {
           versions.splice(idx + 1);
-          data.splice(idx + 1);
         }
-        if (idx >= 0 && versions[idx] === this.version) {
-          data[idx] = value;
-        } else {
-          versions.push(this.version);
-          data.push(value);
+        if (idx >= versions.length || versions[idx] !== this.version - 1) {
+          versions.push({version: this.version - 1, change: target[key]});
         }
+        target[key] = value;
       },
       apply: () => {
         try {
