@@ -6,14 +6,18 @@ import {addVersion} from '../src/actions/version';
 import {wrapHandler} from '../src/builder';
 import strategy from '../src/strategy';
 
-export function runRender(state, func) {
+export function runRenderInternal(internal, current, func) {
   const action = refresh(func);
   return action(null, () => ({
     state: {
-      internal: strategy.add({}, state),
-      current: 0
+      internal,
+      current
     }
   }));
+}
+
+export function runRender(state, func) {
+  return runRenderInternal(strategy.add({}, state), 0, func);
 }
 
 export function runHandlerInternal(internal, current, func) {
