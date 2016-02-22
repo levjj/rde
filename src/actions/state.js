@@ -61,10 +61,14 @@ export function refresh(render) {
 export function swapState(idx) {
   return (dispatch, getState) => {
     try {
+      const state = strategy.current({ state: {
+        current: idx,
+        internal: getState().state.internal
+      }});
       return {
         type: SWAP_STATE,
         idx: idx,
-        dom: renderCurrent(getState, getState().state.states[idx])
+        dom: renderCurrent(getState, state)
       };
     } catch (e) {
       return {

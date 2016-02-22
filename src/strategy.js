@@ -99,9 +99,8 @@ export const proxy = {
     return membrane.getState();
   },
   add: (state, nextState) => {
-    const membrane = stateMembrane(state.internal || {});
-    membrane.setMaxVersion(state.current);
-    return nextState;
+    const membrane = stateMembrane(state.internal || nextState);
+    return membrane.getState();
   },
   maxState: ({state}) => {
     const membrane = stateMembrane(state.internal || {});
@@ -109,7 +108,7 @@ export const proxy = {
   }
 };
 
-const defaultStrategy = simple;
+const defaultStrategy = (typeof window === 'undefined' || typeof window.Proxy !== 'undefined') ? proxy : simple;
 
 const current = {
   handle: defaultStrategy.handle,

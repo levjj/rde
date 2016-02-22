@@ -31,7 +31,7 @@ class StateMembrane {
     let leftIdx = 0;
     let rightIdx = lastIdx;
     while (leftIdx + 1 < rightIdx) {
-      const midIdx = 0 | (leftIdx + (leftIdx + rightIdx) / 2);
+      const midIdx = 0 | (leftIdx + rightIdx) / 2;
       if (versions[midIdx].version < this.version) {
         leftIdx = midIdx;
       } else {
@@ -41,7 +41,7 @@ class StateMembrane {
     if (leftIdx < rightIdx && versions[leftIdx].version < this.version) {
       leftIdx = rightIdx;
     }
-    // leftIdx points to entry before
+    // leftIdx points to last entry for that version
     return leftIdx;
   }
 
@@ -79,11 +79,14 @@ class StateMembrane {
         }
         const versions = objChanges[key];
         const idx = this.lookup(versions);
-        if (versions.length >= 0 && idx < versions.length - 1) {
-          versions.splice(idx + 1);
+
+        let prevValue = target[key];
+        if (versions.length > 0 && idx < versions.length) {
+          prevValue = versions[idx];
+          versions.splice(idx);
         }
-        if (idx >= versions.length || versions[idx] !== this.version - 1) {
-          versions.push({version: this.version - 1, change: target[key]});
+        if (idx === 0 || versions[idx - 1].version !== this.version - 1) {
+          versions.push({version: this.version - 1, change: prevValue});
         }
         target[key] = value;
       },
@@ -110,6 +113,7 @@ class StateMembrane {
 
   cow() {
     this.version++;
+    this.setMaxVersion(this.version);
   }
 
   timeTravel(version) {

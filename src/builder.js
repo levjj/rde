@@ -61,6 +61,9 @@ const eventKeys = [
   'onvolumechange',
   'onwaiting'];
 
+const customEventKeys = [
+  'onframe'];
+
 export function compileJSX(node) {
   if (node.type !== 'JSXElement') return node;
   const name = node.openingElement.name.name;
@@ -125,7 +128,7 @@ export function build(dom, dispatch) {
       el.css(value);
     } else if (eventKeys.indexOf(key) >= 0) {
       el.on(key.substr(2), wrapHandler(dispatch, value));
-    } else {
+    } else if (customEventKeys.indexOf(key) < 0) {
       el.attr(key, value);
     }
   });

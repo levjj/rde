@@ -27,10 +27,7 @@ export function getFrameHandlers(state) {
 }
 
 function resetState(state, action) {
-  const initial = strategy.current({state: {
-    current: 0,
-    internal: state.internal
-  }});
+  const initial = action.state;
   const internal = strategy.add({current: -1}, initial);
   return {
     ...state,
@@ -65,7 +62,7 @@ function resetStateFailed(state, action) {
 function eventHandled(state, action) {
   return {
     ...state,
-    internal: strategy.add(state.internal, action.state),
+    internal: strategy.add(state, action.state),
     current: state.current + 1,
     dom: action.dom
   };

@@ -33,7 +33,7 @@ function createTreeState(m) {
 
 const M = 100;
 const N = 100;
-const STEPS = 4;
+const STEPS = 5;
 
 function init(state) {
   let internal = current.add({}, current.current({

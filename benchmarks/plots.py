@@ -63,5 +63,5 @@ for strat in strategies:
     means = [np.mean([d[6] for d in db if d[4] == e]) for e in events_t]
     amem.plot(size_t, means, color='g')
 
-    plt.show()
-    # plt.savefig(benchmark + '_' + strat + '.png')
+    # plt.show()
+    plt.savefig(benchmark + '_' + strat + '.pdf')
