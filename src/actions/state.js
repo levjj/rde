@@ -43,11 +43,12 @@ export function reset() {
 export function refresh(render) {
   return (dispatch, getState) => {
     const state = getState();
+    const r = render || currentVersion(getState()).render;
     try {
       return {
         type: SWAP_STATE,
         idx: state.state.current,
-        dom: renderState(render, strategy.current(state))
+        dom: renderState(r, strategy.current(state))
       };
     } catch (e) {
       return {

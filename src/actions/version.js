@@ -135,6 +135,9 @@ function rewrite({ast, scopeManager}) {
       return node;
     },
     leave: function leave(node) {
+      if (node.type === 'BinaryExpression') {
+        return node;
+      }
       if (node.type === 'Identifier' && node.name !== '_') {
         const ref = scope.resolve(node);
         if (ref && ref.resolved && ref.resolved.scope === inner &&

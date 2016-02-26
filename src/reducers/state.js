@@ -8,6 +8,8 @@ import {
   TOGGLE_ACTIVE
 } from '../actions/types';
 
+import { refresh } from '../actions/state';
+
 import strategy from '../strategy';
 
 const initialState = {
@@ -60,6 +62,7 @@ function resetStateFailed(state, action) {
 }
 
 function eventHandled(state, action) {
+  setTimeout(() => action.dispatch(refresh()), 0);
   return {
     ...state,
     internal: strategy.add(state, action.state),

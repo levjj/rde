@@ -1,11 +1,12 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'redux/react';
-import { PageHeader, Row, Col, Panel, Button, Glyphicon, Input } from 'react-bootstrap';
+import { PageHeader, Row, Col, Panel, Button, Glyphicon, Input, Tabs, Tab } from 'react-bootstrap';
 import $ from 'jquery';
 import filePicker from 'component-file-picker';
 
 import { flappy, counter } from '../examples';
 import LiveView from './liveview';
+import StateView from './stateview';
 import Editor from './editor';
 import { addVersion, swapVersion } from '../actions/version';
 import { reset, swapState, toggleActive } from '../actions/state';
@@ -18,7 +19,8 @@ import strategy from '../strategy';
   stateError: state.state.error,
   currVersion: state.version.current,
   maxVersion: state.version.versions.length - 1,
-  currState: state.state.current,
+  currStateIdx: state.state.current,
+  currState: strategy.current(state),
   maxState: strategy.maxState(state),
   isActive: state.state.isActive,
   source: state.version.source
@@ -31,7 +33,8 @@ export default class App extends Component {
     stateError: PropTypes.any,
     currVersion: PropTypes.number.isRequired,
     maxVersion: PropTypes.number.isRequired,
-    currState: PropTypes.number.isRequired,
+    currStateIdx: PropTypes.number.isRequired,
+    currState: PropTypes.any,
     maxState: PropTypes.number.isRequired,
     isActive: PropTypes.bool.isRequired,
     isDemo: PropTypes.bool,
@@ -48,7 +51,9 @@ export default class App extends Component {
   }
 
   onChangeState(e) {
-    this.props.dispatch(swapState(+e.target.value - 1));
+    if (this.props.currStateIdx !== +e.target.value - 1) {
+      this.props.dispatch(swapState(+e.target.value - 1));
+    }
   }
 
   onToggle() {
@@ -133,7 +138,7 @@ export default class App extends Component {
   }
 
   render() {
-    const { dom, dispatch, currVersion, maxVersion, currState, maxState, isActive, isDemo, showTimeControl } = this.props;
+    const { dom, dispatch, currVersion, maxVersion, currState, currStateIdx, maxState, isActive, isDemo, showTimeControl } = this.props;
     return (
       <Row>
         {!isDemo && (
@@ -189,7 +194,7 @@ export default class App extends Component {
               </Col>
               <Col xs={4}>
                 <input type="range"
-                    value={currState + 1}
+                    value={(currStateIdx + 1).toString()}
                     onChange={::this.onChangeState}
                     min={1}
                     max={maxState + 1} />
@@ -197,7 +202,7 @@ export default class App extends Component {
               <Col xs={3}>
                 <Input type="number"
                     bsSize="small"
-                    value={currState + 1}
+                    value={(currStateIdx + 1).toString()}
                     onChange={::this.onChangeState}
                     min={1}
                     max={maxState + 1} />
@@ -213,8 +218,15 @@ export default class App extends Component {
               </Col>
             </Row>
           </Panel>)}
-          <Panel header="Live View" bsStyle={this.stateStyle()} footer={this.stateFooter()}>
-            <LiveView dom={dom} dispatch={dispatch} />
+          <Panel bsStyle={this.stateStyle()} footer={this.stateFooter()}>
+            <Tabs defaultActiveKey={1}>
+              <Tab eventKey={1} title="Output">
+                <LiveView dom={dom} dispatch={dispatch} />
+              </Tab>
+              <Tab eventKey={2} title="State">
+                <StateView currState={currState} />
+              </Tab>
+            </Tabs>
           </Panel>
         </Col>
       </Row>
