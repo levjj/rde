@@ -7,8 +7,6 @@ import strategy from '../src/strategy';
 import {runHandlerInternal} from './helpers';
 
 export default function tests() {
-  global.window = {};
-
   describe('time travel', () => {
 
     it('changes to the state should not affect previous states', () => {

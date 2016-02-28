@@ -1,5 +1,3 @@
-const Proxy = (typeof window === 'undefined' || typeof window.Proxy !== 'undefined') && require('harmony-proxy');
-
 const immutableProxies = new WeakSet();
 const immutableObjects = new WeakMap();
 
@@ -84,21 +82,6 @@ export function cow(r) {
           changes.set(target, {[key]: value});
         }
         return true;
-      },
-      enumerate: (target) => function* enumerate() {
-        const props = changes.get(target);
-        const prev = [];
-        if (props) {
-          for (const k in props) {
-            yield k;
-            prev.push(k);
-          }
-        }
-        for (const k in target) {
-          if (!prev.includes(k)) {
-            yield k;
-          }
-        }
       },
       ownKeys: (target) => {
         const props = changes.get(target);

@@ -1,5 +1,3 @@
-const Proxy = (typeof window === 'undefined' || typeof window.Proxy !== 'undefined') && require('harmony-proxy');
-
 const stateMembranes = new WeakMap();
 
 class StateMembrane {
@@ -89,6 +87,7 @@ class StateMembrane {
           versions.push({version: this.version - 1, change: prevValue});
         }
         target[key] = value;
+        return true;
       },
       apply: () => {
         try {
@@ -96,6 +95,17 @@ class StateMembrane {
         } catch (e) {
           throw e;
         }
+      },
+      ownKeys: (target) => {
+        const props = this.changes.get(target);
+        const result = props ? Object.keys(props) : [];
+        const targetKeys = Object.keys(target);
+        for (const k in targetKeys) {
+          if (!result.includes(k)) {
+            result.push(k);
+          }
+        }
+        return result;
       }
     });
     this.proxies.add(proxy);

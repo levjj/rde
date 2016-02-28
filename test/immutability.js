@@ -6,8 +6,6 @@ import {runRender} from './helpers';
 
 
 export default function tests() {
-  global.window = {};
-
   describe('immutability', () => {
 
     it('allows render to read the state', () => {
