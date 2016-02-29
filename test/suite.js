@@ -5,6 +5,7 @@ import current, {simple, proxies, proxy} from '../src/strategy';
 import immutability from './immutability';
 import firstOrder from './first-order';
 import timeTravel from './time-travel';
+import symstr from './symstr';
 
 describe('simple strategy', () => {
 
@@ -46,6 +47,10 @@ describe('single membrane', () => {
   immutability();
   firstOrder();
   timeTravel();
+});
+
+describe('tracked strings', () => {
+  symstr();
 });
 
 export default function() {}
