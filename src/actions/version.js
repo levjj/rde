@@ -5,12 +5,12 @@ import {
   SWAP_VERSION
 } from './types';
 
-import {parse} from 'esprima-fb';
 import {analyze} from 'escope';
-import {replace} from 'estraverse-fb';
+import {parse} from 'esprima-fb';
 import {generate} from 'escodegen';
 
-import {compileJSX} from '../builder';
+import {rewriteJSX, rewriteState, rewriteOps, rewriteSymStrings} from '../rewriting';
+import {SymString, operators} from '../symstr.js';
 import {refresh} from './state';
 
 export function changeReqest(source) {
@@ -20,153 +20,44 @@ export function changeReqest(source) {
   };
 }
 
-function read(src) {
-  return parse(`(function(){\n"use strict";\n${src} })`, {
-    loc: true,
-    range: true
-  });
-}
-
 function check(ast) {
-  const scopeManager = analyze(ast);
+  const scopeManager = analyze(ast, {optimistic: true});
   const globalScope = scopeManager.globalScope;
-  for (const {identifier: {name: global}} of globalScope.through) {
-    if (global !== 'Math') {
-      throw new ReferenceError(`${global} is not defined`);
+  for (const {identifier: {name}, resolved} of globalScope.through) {
+    if (resolved === null && name !== 'Math') {
+      throw new ReferenceError(`${name} is not defined`);
     }
   }
-  const inner = globalScope.childScopes[0];
-  if (inner.thisFound) {
+  if (globalScope.thisFound) {
     throw new ReferenceError('this is not defined');
   }
-  if (!inner.variables.some((v) => v.name === 'render' &&
-                                   v.defs.length === 1 &&
-                                   v.defs[0].type === 'FunctionName')) {
+  if (!globalScope.variables.some((v) => v.name === 'render' &&
+                                         v.defs.length === 1 &&
+                                         v.defs[0].type === 'FunctionName')) {
     throw new Error('Expected a "render" function');
   }
-  return {ast, scopeManager};
-}
-
-function stateVar(identifier) {
-  return {
-    type: 'MemberExpression',
-    computed: false,
-    object: {
-      type: 'MemberExpression',
-      computed: false,
-      object: {
-        type: 'Identifier',
-        name: 'window'
-      },
-      property: {
-        type: 'Identifier',
-        name: 'state'
-      }
-    },
-    property: identifier
-  };
-}
-
-function stateAssign(identifier, value) {
-  return {
-    type: 'ExpressionStatement',
-    expression: {
-      type: 'AssignmentExpression',
-      operator: '=',
-      left: stateVar(identifier),
-      right: value || {type: 'Identifier', name: 'undefined'}
-    }
-  };
-}
-
-function initFun(init) {
-  return {
-    type: 'FunctionDeclaration',
-    id: {type: 'Identifier', name: 'init'},
-    params: [],
-    defaults: [],
-    body: {
-      type: 'BlockStatement',
-      body: init.map(decl => stateAssign(decl.id, decl.init))
-    },
-    generator: false,
-    expression: false
-  };
-}
-
-function returnRenderInit() {
-  return {
-    type: 'ReturnStatement',
-    argument: {
-      type: 'ArrayExpression',
-      elements: [{
-        type: 'Identifier',
-        name: 'init'
-      }, {
-        type: 'Identifier',
-        name: 'render'
-      }]
-    }
-  };
-}
-
-function rewrite({ast, scopeManager}) {
-  let scope = scopeManager.globalScope;
-  const inner = scopeManager.globalScope.childScopes[0];
-  let init = [];
-  return replace(ast, {
-    enter: function enter(node) {
-      if (node.type === 'ReturnStatement' && scope === inner) {
-        throw new Error('Unexpeced global return');
-      }
-      if (node.type === 'FunctionExpression' || node.type === 'FunctionDeclaration') {
-        scope = scopeManager.acquire(node);
-      }
-      if (node.type === 'VariableDeclaration' && scope === inner) {
-        init = init.concat(node.declarations);
-        return this.remove();
-      }
-      if (node.type === 'JSXElement') {
-        return compileJSX(node);
-      }
-      if (node.type === 'JSXExpressionContainer') {
-        return node.expression;
-      }
-      return node;
-    },
-    leave: function leave(node) {
-      if (node.type === 'BinaryExpression') {
-        return node;
-      }
-      if (node.type === 'Identifier' && node.name !== '_') {
-        const ref = scope.resolve(node);
-        if (ref && ref.resolved && ref.resolved.scope === inner &&
-            !(ref.resolved.defs[0].type === 'FunctionName')) {
-          return stateVar(node);
-        }
-      }
-      if (node.type === 'FunctionExpression' || node.type === 'FunctionDeclaration') {
-        scope = scope.upper;
-      }
-      if (node === inner.block) {
-        node.body.body.push(initFun(init));
-        node.body.body.push(returnRenderInit());
-      }
-      return node;
-    }
-  });
 }
 
 export function addVersion(source) {
   return () => {
     try {
-      const ast = rewrite(check(read(source)));
-      const [init, render] = eval(generate(ast))();
+      let ast = parse(source, {range: true});
+      check(ast);
+      ast = rewriteState(rewriteJSX(ast));
+      const astAndMapping = rewriteSymStrings(ast);
+      ast = rewriteOps(astAndMapping.ast);
+      const generated = generate(ast);
+      const wrapped = `(function(){\n"use strict";\n${generated} })`;
+      /* eslint no-eval:0 */
+      global.operators = operators;
+      global.sym = SymString.single;
+      const [init, render] = eval(wrapped)();
       return {
         type: ADD_VERSION,
         source,
         init,
-        render
+        render,
+        mapping: astAndMapping.mapping
       };
     } catch (e) {
       return {

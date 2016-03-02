@@ -53,4 +53,6 @@ describe('tracked strings', () => {
   symstr();
 });
 
+import './rewrite';
+
 export default function() {}

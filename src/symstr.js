@@ -4,8 +4,8 @@ let binary;
 function wrap(x) {
   return new Proxy(x, {
     get: (target, key) => {
-      if (+key >= 0 && +key < target.length) {
-        return target.charAt(+key);
+      if (key === Symbol.toPrimitive) {
+        return target.toPrimitive;
       }
       if (key === Symbol.iterator) {
         const chars = [];
@@ -14,21 +14,24 @@ function wrap(x) {
         }
         return chars[Symbol.iterator];
       }
+      if (+key >= 0 && +key < target.length) {
+        return target.charAt(+key);
+      }
       return target[key];
     },
     set: (target, key, value) => value,
     deleteProperty: () => true,
     getPrototypeOf: () => String.prototype, // FIXME: Needs to wrapped
     getOwnPropertyDescriptor: (target, prop) => {
-      if (+prop < 0 || +prop >= target.length) {
-        return undefined;
+      if (+prop >= 0 && +prop < target.length) {
+        return {
+          value: target.charAt(+prop),
+          writable: false,
+          enumerable: true,
+          configurable: true // FIXME: might need to be false
+        };
       }
-      return {
-        value: target.charAt(+prop),
-        writable: false,
-        enumerable: true,
-        configurable: false
-      };
+      return undefined;
     },
     defineProperty: () => { throw new TypeError('defineProperty invalid'); },
     has: () => { throw new TypeError('cannot use \'in\' operator'); },
@@ -62,6 +65,16 @@ export class SymString {
 
   toSourceString() {
     return this.strs.reduce((res, {str}) => res + str, '');
+  }
+
+  toPrimitive(hint) {
+    if (hint === 'number') {
+      return +this.toSourceString();
+    }
+    if (hint === 'string' || hint === 'default') {
+      return this.toSourceString();
+    }
+    return this.toSourceString().length > 0;
   }
 
   mapParts(f) {
