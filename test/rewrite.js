@@ -37,6 +37,8 @@ describe('rewrite JSX', () => {
     expect(dom.name.toSourceString()).to.equal('a');
     expect(dom.attributes).to.deep.equal({});
     expect(dom.children).to.deep.equal([]);
+    /* eslint eqeqeq:0 */
+    expect(dom.name == 'a').to.be.true;
     expect(`<${dom.name}></${dom.name}>`).to.be.equal('<a></a>');
   });
 
@@ -146,6 +148,42 @@ describe('rewrite symbolic strings', () => {
     }]);
     expect(mapping[id]).to.deep.equal([0, 5]);
     expect(mapping[id2]).to.deep.equal([8, 13]);
+  });
+
+  it('rewrite string concat assignment', () => {
+    const {res, mapping} = rew('var i = "abc"; i += "def"');
+    expect(mapping).to.be.an('object');
+    expect(Object.keys(mapping)).to.have.length(2);
+    const id = +Object.keys(mapping)[0];
+    const id2 = +Object.keys(mapping)[1];
+    expect(res.strs).to.not.be.undefined;
+    expect(res.strs).to.deep.equal([{
+      str: 'abc',
+      id,
+      idx: 0,
+      start: 0
+    }, {
+      str: 'def',
+      id: id2,
+      idx: 0,
+      start: 3
+    }]);
+    expect(mapping[id]).to.deep.equal([8, 13]);
+    expect(mapping[id2]).to.deep.equal([20, 25]);
+  });
+
+  it('rewrite string prefix', () => {
+    const {res, mapping} = rew('var i = "12"; ++i');
+    expect(mapping).to.be.an('object');
+    expect(Object.keys(mapping)).to.have.length(1);
+    expect(res).to.be.equal(13);
+  });
+
+  it('rewrite string postfix', () => {
+    const {res, mapping} = rew('var i = "12"; [i++, i]');
+    expect(mapping).to.be.an('object');
+    expect(Object.keys(mapping)).to.have.length(1);
+    expect(res).to.be.deep.equal([12, 13]);
   });
 });
 

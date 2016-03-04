@@ -6,10 +6,6 @@ export default class StateView extends Component {
     currState: PropTypes.any
   }
 
-  shouldComponentUpdate(nextProps) {
-    return nextProps.currState !== this.props.currState;
-  }
-
   render() {
     return (
       <pre style={{height: '38vh', width: '100%'}}>

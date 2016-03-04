@@ -207,8 +207,8 @@ export class SymString {
   split(separator, limit) {
     // Splits a String object into an array of strings by separating the string into substrings.
     const str = this.toSourceString();
-    const typeo = unary.typeof;
     let indices = [];
+    const typeo = unary.typeof;
     if (typeo(separator) === 'string') {
       const idx = str.indexOf(separator);
       if (idx >= 0) indices = [{index: idx, length: separator.length}];
@@ -414,6 +414,13 @@ function sym(val) {
   return SymString.single(val);
 }
 
+export function typeOf(val) {
+  if (val instanceof SymString) {
+    return 'string';
+  }
+  return typeof val;
+}
+
 unary = {
   '-': (op) => {
     if (op instanceof SymString) {
@@ -439,12 +446,7 @@ unary = {
     }
     return ~op;
   },
-  'typeof': (op) => {
-    if (op instanceof SymString) {
-      return 'string';
-    }
-    return typeof op;
-  },
+  'typeof': typeOf,
   'void': (o) => void(o)
   // do not rewrite: delete
 };

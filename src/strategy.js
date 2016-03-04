@@ -3,14 +3,15 @@ import clone from 'clone';
 
 import {immutable, lazyFirstOrder, cow} from './proxies';
 import stateMembrane from './proxy';
+import {typeOf} from './symstr';
 
 function checkState(state) {
   const ws = new WeakSet();
   function c(o) {
-    if (typeof o === 'function') {
+    if (typeOf(o) === 'function') {
       throw new Error('Functions not allowed in state');
     }
-    if (typeof o !== 'object') return;
+    if (typeOf(o) !== 'object') return;
     ws.add(o);
     Object.getOwnPropertyNames(o).forEach((prop) => {
       if (o.hasOwnProperty(prop) &&
@@ -108,7 +109,7 @@ export const proxy = {
   }
 };
 
-const defaultStrategy = (typeof window === 'undefined' || typeof window.Proxy !== 'undefined') ? proxy : simple;
+const defaultStrategy = (typeOf(window) === 'undefined' || typeOf(window.Proxy) !== 'undefined') ? proxy : simple;
 
 const current = {
   handle: defaultStrategy.handle,

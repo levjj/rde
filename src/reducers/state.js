@@ -8,8 +8,8 @@ import {
   TOGGLE_ACTIVE
 } from '../actions/types';
 
-import { refresh } from '../actions/state';
-
+import {refresh} from '../actions/state';
+import {typeOf} from '../symstr';
 import strategy from '../strategy';
 
 const initialState = {
@@ -21,7 +21,7 @@ const initialState = {
 
 export function getFrameHandlers(state) {
   function rec(d) {
-    if (typeof d !== 'object') return [];
+    if (typeOf(d) !== 'object') return [];
     const fh = d.attributes.onframe ? [d.attributes.onframe] : [];
     return d.children.reduce((res, child) => [...res, ...rec(child)], fh);
   }

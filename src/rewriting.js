@@ -2,6 +2,7 @@ import {analyze} from 'escope';
 import {replace} from 'estraverse-fb';
 
 import {compileJSX} from './builder';
+import {typeOf} from './symstr';
 
 function stateVar(identifier) {
   return {
@@ -181,7 +182,12 @@ function postfixUpdate(node, update) {
       generator: false,
       expression: false
     },
-    arguments: [node]
+    arguments: [{
+      type: 'UnaryExpression',
+      operator: '+',
+      prefix: true,
+      argument: node
+    }]
   };
 }
 
@@ -193,7 +199,12 @@ function desugarUpdate({argument, operator, prefix}) {
     right: {
       type: 'BinaryExpression',
       operator: operator[0],
-      left: argument,
+      left: {
+        type: 'UnaryExpression',
+        operator: '+',
+        prefix: true,
+        argument
+      },
       right: {type: 'Literal', value: 1}
     }
   };
@@ -207,7 +218,7 @@ function desugarAssignment({operator, left, right}) {
     left,
     right: {
       type: 'BinaryExpression',
-      operator: operator.substr(0, -1),
+      operator: operator.slice(0, -1),
       left,
       right
     }
@@ -243,7 +254,7 @@ export function rewriteSymStrings(ast) {
   const mapping = {};
   const rewritten = replace(ast, {
     leave: function enter(node) {
-      if (node.type === 'Literal' && typeof node.value === 'string') {
+      if (node.type === 'Literal' && typeOf(node.value) === 'string') {
         const id = nextId++;
         mapping[id] = node.range;
         return {

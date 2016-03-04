@@ -1,9 +1,11 @@
+import {typeOf} from './symstr';
+
 const immutableProxies = new WeakSet();
 const immutableObjects = new WeakMap();
 
 export function immutable(x) {
   if (x === null ||
-      (typeof x !== 'object' && typeof x !== 'function') ||
+      (typeOf(x) !== 'object' && typeOf(x) !== 'function') ||
       immutableProxies.has(x)) {
     return x;
   }
@@ -26,7 +28,7 @@ const lazyFirstOrderObjects = new WeakMap();
 
 export function lazyFirstOrder(x) {
   if (x === null ||
-      (typeof x !== 'object' && typeof x !== 'function') ||
+      (typeOf(x) !== 'object' && typeOf(x) !== 'function') ||
       lazyFirstOrderProxies.has(x)) {
     return x;
   }
@@ -55,7 +57,7 @@ export function cow(r) {
 
   const wrap = (x) => {
     if (x === null ||
-        (typeof x !== 'object' && typeof x !== 'function') ||
+        (typeOf(x) !== 'object' && typeOf(x) !== 'function') ||
         cowProxies.has(x)) {
       return x;
     }

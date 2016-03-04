@@ -1,3 +1,5 @@
+import {typeOf} from './symstr';
+
 const stateMembranes = new WeakMap();
 
 class StateMembrane {
@@ -45,7 +47,7 @@ class StateMembrane {
 
   wrap(x) {
     if (x === null ||
-        (typeof x !== 'object' && typeof x !== 'function') ||
+        (typeOf(x) !== 'object' && typeOf(x) !== 'function') ||
         this.proxies.has(x)) {
       return x;
     }

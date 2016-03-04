@@ -1,6 +1,7 @@
 import $ from 'jquery';
 
 import {event} from './actions/state';
+import {typeOf} from './symstr';
 
 const eventKeys = [
   'onabort',
@@ -65,6 +66,9 @@ const customEventKeys = [
   'onframe'];
 
 export function compileJSX(node) {
+  if (node.type === 'Literal' && typeOf(node.value) === 'string') {
+    return {...node, value: node.value.trim()};
+  }
   if (node.type !== 'JSXElement') return node;
   const name = node.openingElement.name.name;
   const attributes = [];
@@ -74,6 +78,12 @@ export function compileJSX(node) {
       value: attr.value
     });
   }
+  const children = node.children.map(compileJSX).filter(n => {
+    // drop empty string literals
+    return n.type !== 'Literal' ||
+           typeOf(n.value) !== 'string' ||
+           n.value.length > 0;
+  });
   return {type: 'ObjectExpression', properties: [
     {
       type: 'Property',
@@ -102,7 +112,7 @@ export function compileJSX(node) {
     }, {
       type: 'Property',
       key: {type: 'Identifier', name: 'children'},
-      value: {type: 'ArrayExpression', elements: node.children.map(compileJSX)},
+      value: {type: 'ArrayExpression', elements: children},
       kind: 'init',
       method: false,
       shorthand: false,
@@ -118,13 +128,13 @@ export function wrapHandler(dispatch, func) {
 }
 
 export function build(dom, dispatch) {
-  if (typeof dom !== 'object') {
+  if (typeOf(dom) !== 'object') {
     return $(`<span>${dom}</span>`);
   }
   const el = $(`<${dom.name}></${dom.name}>`);
   Object.keys(dom.attributes).forEach((key) => {
     const value = dom.attributes[key];
-    if (key === 'style' && typeof value === 'object') {
+    if (key === 'style' && typeOf(value) === 'object') {
       el.css(value);
     } else if (eventKeys.indexOf(key) >= 0) {
       el.on(key.substr(2), wrapHandler(dispatch, value));
