@@ -6,6 +6,7 @@ import filePicker from 'component-file-picker';
 
 import { flappy, counter, spiral } from '../examples';
 import LiveView from './liveview';
+import HTMLView from './htmlview';
 import StateView from './stateview';
 import Editor from './editor';
 import { addVersion, swapVersion } from '../actions/version';
@@ -234,7 +235,12 @@ export default class App extends Component {
               <Tab eventKey={1} title="Output">
                 <LiveView dom={dom} dispatch={dispatch} />
               </Tab>
-              <Tab eventKey={2} title="State">
+              <Tab eventKey={2} title="HTML">
+                <br />
+                <HTMLView dom={dom} />
+              </Tab>
+              <Tab eventKey={3} title="State">
+                <br />
                 <StateView currState={currState} />
               </Tab>
             </Tabs>

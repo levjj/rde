@@ -3,7 +3,7 @@ import $ from 'jquery';
 import {event} from './actions/state';
 import {typeOf} from './symstr';
 
-const eventKeys = [
+export const eventKeys = [
   'onabort',
   'onautocomplete',
   'onautocompleteerror',
@@ -62,7 +62,7 @@ const eventKeys = [
   'onvolumechange',
   'onwaiting'];
 
-const customEventKeys = [
+export const customEventKeys = [
   'onframe'];
 
 export function compileJSX(node) {
