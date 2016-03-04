@@ -4,7 +4,7 @@ import { PageHeader, Row, Col, Panel, Button, Glyphicon, Input, Tabs, Tab } from
 import $ from 'jquery';
 import filePicker from 'component-file-picker';
 
-import { flappy, counter } from '../examples';
+import { flappy, counter, spiral } from '../examples';
 import LiveView from './liveview';
 import StateView from './stateview';
 import Editor from './editor';
@@ -101,6 +101,12 @@ export default class App extends Component {
     this.props.dispatch(reset());
   }
 
+  loadSpiral(evt) {
+    evt.preventDefault();
+    this.props.dispatch(addVersion(spiral));
+    this.props.dispatch(reset());
+  }
+
   sourceHeader() {
     return (<span>
           Source
@@ -114,6 +120,11 @@ export default class App extends Component {
               <Button bsSize="small"
                 onClick={::this.loadFlappy}>
                 Flappy Bird Example
+              </Button>
+              {' '}
+              <Button bsSize="small"
+                onClick={::this.loadSpiral}>
+                Spiral Example
               </Button>
             </span>)}
         </span>);
