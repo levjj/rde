@@ -2,6 +2,7 @@ import React, { Component, PropTypes } from 'react';
 import { connect } from 'redux/react';
 import { PageHeader, Row, Col, Panel, Button, Glyphicon, Input, Tabs, Tab } from 'react-bootstrap';
 import $ from 'jquery';
+import _ from 'lodash';
 import filePicker from 'component-file-picker';
 
 import { flappy, counter, spiral } from '../examples';
@@ -43,6 +44,8 @@ export default class App extends Component {
     source: PropTypes.string,
     dispatch: PropTypes.func.isRequired
   }
+
+  state = {outkey: 1};
 
   componentWillMount() {
   }
@@ -106,6 +109,17 @@ export default class App extends Component {
     evt.preventDefault();
     this.props.dispatch(addVersion(spiral));
     this.props.dispatch(reset());
+  }
+
+  handleOutSelect(key) {
+    this.setState({outkey: key});
+    _.defer(() => {
+      if (key === 2) {
+        this.refs.htmlview.onActivate();
+      } else if (key === 3) {
+        this.refs.stateview.onActivate();
+      }
+    });
   }
 
   sourceHeader() {
@@ -231,17 +245,17 @@ export default class App extends Component {
             </Row>
           </Panel>)}
           <Panel bsStyle={this.stateStyle()} footer={this.stateFooter()}>
-            <Tabs defaultActiveKey={1}>
+            <Tabs activeKey={this.state.outkey} onSelect={::this.handleOutSelect} animation={false}>
               <Tab eventKey={1} title="Output">
                 <LiveView dom={dom} dispatch={dispatch} />
               </Tab>
               <Tab eventKey={2} title="HTML">
                 <br />
-                <HTMLView dom={dom} />
+                <HTMLView dom={dom} dispatch={dispatch} ref="htmlview" />
               </Tab>
               <Tab eventKey={3} title="State">
                 <br />
-                <StateView currState={currState} />
+                <StateView currState={currState} ref="stateview" />
               </Tab>
             </Tabs>
           </Panel>

@@ -1,12 +1,16 @@
 import React, { Component, PropTypes } from 'react';
 import _ from 'lodash';
+import AceEditor from 'react-ace/src/ace.jsx';
 
 import {eventKeys, customEventKeys} from '../builder';
 import {typeOf} from '../symstr';
+import {stringLitCursor} from '../actions/manipulation';
 
 export default class HTMLView extends Component {
   static propTypes = {
-    dom: PropTypes.any
+    dom: PropTypes.any,
+    editable: PropTypes.bool,
+    dispatch: PropTypes.func.isRequired
   }
 
   shouldComponentUpdate(nextProps) {
@@ -23,6 +27,12 @@ export default class HTMLView extends Component {
       }
     }
     return rec(this.props.dom, nextProps.dom);
+  }
+
+  onActivate() {
+    this.refs.htmlace.editor.resize();
+    // TODO:
+    // editor.onSelect (idx) => dispatch(stringLitCursor(idx))
   }
 
   formatCSS(obj) {
@@ -56,10 +66,16 @@ export default class HTMLView extends Component {
   }
 
   render() {
+    const {dom, editable} = this.props;
     return (
-      <pre style={{height: '38vh', width: '100%'}}>
-        {this.formatHTML(this.props.dom)}
-      </pre>
-    );
+      <AceEditor ref="htmlace"
+                 mode="html"
+                 theme="eclipse"
+                 name="htmlace"
+                 height="38vh"
+                 width="100%"
+                 fontSize={14}
+                 readOnly={!editable}
+                 value={this.formatHTML(dom)} />);
   }
 }

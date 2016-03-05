@@ -2,7 +2,8 @@ import {
   CHANGE_REQUEST,
   ADD_VERSION,
   ADD_VERSION_FAILED,
-  SWAP_VERSION
+  SWAP_VERSION,
+  STRING_LIT_CURSOR
 } from '../actions/types';
 
 import { addVersion as doAddVersion } from '../actions/version';
@@ -22,7 +23,8 @@ export function currentVersion(state) {
     return {
       source: '',
       init: () => '',
-      render: () => ''
+      render: () => '',
+      mapping: {}
     };
   }
   return versions[current];
@@ -39,13 +41,13 @@ function changeReqest(state, action) {
 
 function addVersion(state, action) {
   const pastVersions = state.versions.slice(0, state.current + 1);
-  const {source, init, render} = action;
+  const {source, init, render, mapping} = action;
   setTimeout(() => action.dispatch(refresh(render)), 0);
   return {
     ...state,
     source,
     request: null,
-    versions: [...pastVersions, {source, init, render}],
+    versions: [...pastVersions, {source, init, render, mapping}],
     current: pastVersions.length,
     error: null
   };
@@ -70,12 +72,21 @@ function swapVersion(state, action) {
   };
 }
 
+function strLitCursor(state, action) {
+  const {mapping} = currentVersion({version: state});
+  return {
+    ...state,
+    highlight: mapping[action.id]
+  };
+}
+
 export default function code(state = initialState, action = {}) {
   switch (action.type) {
   case CHANGE_REQUEST: return changeReqest(state, action);
   case ADD_VERSION: return addVersion(state, action);
   case ADD_VERSION_FAILED: return addVersionFailed(state, action);
   case SWAP_VERSION: return swapVersion(state, action);
+  case STRING_LIT_CURSOR: return strLitCursor(state, action);
   default: return state;
   }
 }

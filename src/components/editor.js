@@ -3,6 +3,8 @@ import { connect } from 'redux/react';
 import AceEditor from 'react-ace/src/ace.jsx';
 
 require('brace/mode/jsx');
+require('brace/mode/html');
+require('brace/mode/json');
 require('brace/theme/eclipse');
 
 import { changeReqest } from '../actions/version';
