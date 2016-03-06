@@ -3,7 +3,7 @@ import {connect} from 'redux/react';
 
 import Ace from './ace';
 import {isSymString} from '../symstr';
-import {stringLitCursor} from '../actions/manipulation';
+import {stringLitCursor, stringLitInsert, stringLitDelete} from '../actions/manipulation';
 
 @connect(state => ({
   htmlstr: state.state.htmlstr
@@ -26,14 +26,46 @@ export default class HTMLView extends Component {
     }
   }
 
+  onChange(newSource) {
+    const firstDiff = this.firstDifference('' + this.props.htmlstr, newSource);
+    const lit = this.getStrLitAtPos(firstDiff);
+    const diff = newSource.length > this.props.htmlstr.length;
+    if (lit && lit.id > 0) {
+      const {id, idx} = lit;
+      if (diff > 0) {
+        const insertStr = newSource.substr(firstDiff, diff);
+        // this.props.dispatch(stringLitInsert(id, idx, insertStr));
+      } else if (diff < 0) {
+        // this.props.dispatch(stringLitDelete(id, idx, -diff));
+      }
+    } else {
+      // this.refs.htmlace.dropEdit();
+    }
+  }
+
   onChangeSelection(selection) {
     const {row, column} = selection.start;
     const htmlidx = this.strIndexOf(row, column);
+    const lit = this.getStrLitAtPos(htmlidx);
+    if (lit) {
+      this.props.dispatch(stringLitCursor(lit.id, lit.idx));
+    }
+  }
+
+  getStrLitAtPos(htmlidx) {
     const c = this.props.htmlstr[htmlidx];
     if (isSymString(c)) {
-      const {id, idx} = c.strs[0];
-      this.props.dispatch(stringLitCursor(id, idx));
+      return c.strs[0];
     }
+    return null;
+  }
+
+  firstDifference(strA, strB) {
+    const lim = Math.min(strA.length, strB.length);
+    for (let i = 0; i < lim; i++) {
+      if (strA[i] !== strB[i]) return i;
+    }
+    return lim;
   }
 
   strIndexOf(row, column) {
@@ -52,6 +84,7 @@ export default class HTMLView extends Component {
            mode="html"
            name="htmlace"
            height={38}
+           onChange={::this.onChange}
            onChangeSelection={::this.onChangeSelection}
            source={`${htmlstr}`} />);
   }

@@ -72,6 +72,12 @@ export default class Ace extends Component {
             locA.end.column === locB.end.column);
   }
 
+  dropEdit() {
+    const cursor = this.refs.ace.editor.getSelectionRange().start;
+    this.forceUpdate(() => {
+      this.refs.ace.editor.moveCursorTo(cursor.row, cursor.column);
+    });
+  }
 
   repaint() {
     this.refs.ace.editor.resize();
