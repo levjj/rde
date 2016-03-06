@@ -15,28 +15,24 @@ import { reset, swapState, toggleActive } from '../actions/state';
 import strategy from '../strategy';
 
 @connect(state => ({
-  dom: state.state.dom,
   request: state.version.request,
   versionError: state.version.error,
   stateError: state.state.error,
   currVersion: state.version.current,
   maxVersion: state.version.versions.length - 1,
   currStateIdx: state.state.current,
-  currState: strategy.current(state),
   maxState: strategy.maxState(state),
   isActive: state.state.isActive,
   source: state.version.source
 }))
 export default class App extends Component {
   static propTypes = {
-    dom: PropTypes.any,
     request: PropTypes.any,
     versionError: PropTypes.any,
     stateError: PropTypes.any,
     currVersion: PropTypes.number.isRequired,
     maxVersion: PropTypes.number.isRequired,
     currStateIdx: PropTypes.number.isRequired,
-    currState: PropTypes.any,
     maxState: PropTypes.number.isRequired,
     isActive: PropTypes.bool.isRequired,
     isDemo: PropTypes.bool,
@@ -113,13 +109,6 @@ export default class App extends Component {
 
   handleOutSelect(key) {
     this.setState({outkey: key});
-    _.defer(() => {
-      if (key === 2) {
-        this.refs.htmlview.onActivate();
-      } else if (key === 3) {
-        this.refs.stateview.onActivate();
-      }
-    });
   }
 
   sourceHeader() {
@@ -164,7 +153,7 @@ export default class App extends Component {
   }
 
   render() {
-    const { dom, dispatch, currVersion, maxVersion, currState, currStateIdx, maxState, isActive, isDemo, showTimeControl } = this.props;
+    const { currVersion, maxVersion, currStateIdx, maxState, isActive, isDemo, showTimeControl } = this.props;
     return (
       <Row>
         {!isDemo && (
@@ -247,15 +236,15 @@ export default class App extends Component {
           <Panel bsStyle={this.stateStyle()} footer={this.stateFooter()}>
             <Tabs activeKey={this.state.outkey} onSelect={::this.handleOutSelect} animation={false}>
               <Tab eventKey={1} title="Output">
-                <LiveView dom={dom} dispatch={dispatch} />
+                <LiveView />
               </Tab>
               <Tab eventKey={2} title="HTML">
                 <br />
-                <HTMLView dom={dom} dispatch={dispatch} ref="htmlview" />
+                <HTMLView active={this.state.outkey === 2} ref="htmlview" />
               </Tab>
               <Tab eventKey={3} title="State">
                 <br />
-                <StateView currState={currState} ref="stateview" />
+                <StateView active={this.state.outkey === 3} ref="stateview" />
               </Tab>
             </Tabs>
           </Panel>

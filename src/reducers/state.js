@@ -10,6 +10,7 @@ import {
 
 import {refresh} from '../actions/state';
 import {typeOf} from '../symstr';
+import {formatHTML} from '../builder';
 import strategy from '../strategy';
 
 const initialState = {
@@ -35,7 +36,8 @@ function resetState(state, action) {
     ...state,
     internal,
     current: 0,
-    dom: action.dom
+    dom: action.dom,
+    htmlstr: formatHTML(action.dom)
   };
 }
 
@@ -43,7 +45,8 @@ function swapState(state, action) {
   return {
     ...state,
     current: action.idx,
-    dom: action.dom
+    dom: action.dom,
+    htmlstr: formatHTML(action.dom)
   };
 }
 
@@ -67,7 +70,8 @@ function eventHandled(state, action) {
     ...state,
     internal: strategy.add(state, action.state),
     current: state.current + 1,
-    dom: action.dom
+    dom: action.dom,
+    htmlstr: formatHTML(action.dom)
   };
 }
 

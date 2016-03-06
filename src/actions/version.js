@@ -41,7 +41,7 @@ function check(ast) {
 export function addVersion(source) {
   return () => {
     try {
-      let ast = parse(source, {range: true});
+      let ast = parse(source, {loc: true});
       check(ast);
       ast = rewriteState(rewriteJSX(ast));
       const astAndMapping = rewriteSymStrings(ast);

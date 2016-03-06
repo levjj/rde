@@ -11,7 +11,7 @@ export default function tests() {
   it('get', () => {
     // Returns the character at the specified index.
     const res = str[1];
-    expect(res.strs).to.deep.equal([{str: 'b', id: 23, idx: 1, start: 0}]);
+    expect(res.strs).to.deep.equal([{str: 'b', id: 23, idx: 1}]);
     expect(str[-1]).to.be.undefined;
     expect(str[3]).to.be.undefined;
     expect(str.a).to.be.undefined;
@@ -53,7 +53,7 @@ export default function tests() {
   it('charAt', () => {
     // Returns the character at the specified index.
     const res = str.charAt(1);
-    expect(res.strs).to.deep.equal([{str: 'b', id: 23, idx: 1, start: 0}]);
+    expect(res.strs).to.deep.equal([{str: 'b', id: 23, idx: 1}]);
   });
 
   it('charCodeAt', () => {
@@ -113,7 +113,7 @@ export default function tests() {
 
   it('normalize', () => {
     // Returns the Unicode Normalization Form of the calling string value.
-    expect(str.normalize().strs).to.deep.equal([{str: 'abc', id: 23, idx: 0, start: 0}]);
+    expect(str.normalize().strs).to.deep.equal([{str: 'abc', id: 23, idx: 0}]);
   });
 
   it('quote', () => {
@@ -143,9 +143,9 @@ export default function tests() {
   it('slice', () => {
     // Extracts a section of a string and returns a new string.
     expect(str.slice(1, 2).toSourceString()).to.be.equal('b');
-    expect(str.slice(1, 2).strs).to.deep.equal([{str: 'b', id: 23, idx: 1, start: 0}]);
-    expect(str.slice(1, 3).strs).to.deep.equal([{str: 'bc', id: 23, idx: 1, start: 0}]);
-    expect(str.slice(0, 2).strs).to.deep.equal([{str: 'ab', id: 23, idx: 0, start: 0}]);
+    expect(str.slice(1, 2).strs).to.deep.equal([{str: 'b', id: 23, idx: 1}]);
+    expect(str.slice(1, 3).strs).to.deep.equal([{str: 'bc', id: 23, idx: 1}]);
+    expect(str.slice(0, 2).strs).to.deep.equal([{str: 'ab', id: 23, idx: 0}]);
   });
 
   it('split', () => {
@@ -153,6 +153,9 @@ export default function tests() {
     const res = str.split('b');
     expect(res[0].toSourceString()).to.be.equal('a');
     expect(res[1].toSourceString()).to.be.equal('c');
+    const res2 = str.split(/b/);
+    expect(res2[0].toSourceString()).to.be.equal('a');
+    expect(res2[1].toSourceString()).to.be.equal('c');
   });
 
   it('startsWith', () => {
@@ -168,7 +171,6 @@ export default function tests() {
 
   it('substring', () => {
     // Returns the characters in a string between two indexes into the string.
-    debugger;
     expect(str.substring(1, 2).toSourceString()).to.be.equal('b');
   });
 

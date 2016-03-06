@@ -1,81 +1,58 @@
-import React, { Component, PropTypes } from 'react';
-import _ from 'lodash';
-import AceEditor from 'react-ace/src/ace.jsx';
+import React, {Component, PropTypes} from 'react';
+import {connect} from 'redux/react';
 
-import {eventKeys, customEventKeys} from '../builder';
-import {typeOf} from '../symstr';
+import Ace from './ace';
+import {isSymString} from '../symstr';
 import {stringLitCursor} from '../actions/manipulation';
 
+@connect(state => ({
+  htmlstr: state.state.htmlstr
+}))
 export default class HTMLView extends Component {
   static propTypes = {
-    dom: PropTypes.any,
+    htmlstr: PropTypes.any,
+    active: PropTypes.bool.isRequired,
     editable: PropTypes.bool,
     dispatch: PropTypes.func.isRequired
   }
 
   shouldComponentUpdate(nextProps) {
-    function rec(left, right) {
-      if (typeOf(left) !== typeOf(right)) return true;
-      if (typeOf(left) !== 'object') return left === right;
-      const leftKeys = Object.keys(left);
-      const rightKeys = Object.keys(right);
-      if (leftKeys.length !== rightKeys.length) return true;
-      for (let i = 0; i < leftKeys.length; i++) {
-        const key = leftKeys[i];
-        if (key !== rightKeys[i]) return true;
-        if (rec(left[key], right[key])) return true;
-      }
-    }
-    return rec(this.props.dom, nextProps.dom);
+    return this.props.active || nextProps.active;
   }
 
-  onActivate() {
-    this.refs.htmlace.editor.resize();
-    // TODO:
-    // editor.onSelect (idx) => dispatch(stringLitCursor(idx))
+  componentDidUpdate(prevProps) {
+    if (!prevProps.active && this.props.active) {
+      this.refs.htmlace.repaint();
+    }
   }
 
-  formatCSS(obj) {
-    return Object.keys(obj).map(key => {
-      const k = _.snakeCase(key).replace(/_/g, '-');
-      return `${k}:${obj[key]};`;
-    }).join(' ');
+  onChangeSelection(selection) {
+    const {row, column} = selection.start;
+    const htmlidx = this.strIndexOf(row, column);
+    const c = this.props.htmlstr[htmlidx];
+    if (isSymString(c)) {
+      const {id, idx} = c.strs[0];
+      this.props.dispatch(stringLitCursor(id, idx));
+    }
   }
 
-  formatHTML(dom, indent = 0) {
-    const pre = ' '.repeat(indent);
-    if (typeOf(dom) !== 'object') {
-      return `${pre}${dom}\n`;
+  strIndexOf(row, column) {
+    const parts = `${this.props.htmlstr}`.split('\n');
+    let idx = 0;
+    for (let i = 0; i < row; i++) {
+      idx += parts[i].length + 1;
     }
-    const attrString = Object.keys(dom.attributes).map(key => {
-      let value = dom.attributes[key];
-      if (key === 'style' && typeOf(value) === 'object') {
-        value = this.formatCSS(value);
-      }
-      if (eventKeys.includes(key) || customEventKeys.includes(key)) {
-        return '';
-      }
-      return ` ${key}=\"${value}\"`;
-    }).join('');
-    let res = `${pre}<${dom.name}${attrString}>\n`;
-    for (const childDom of dom.children) {
-      res += this.formatHTML(childDom, indent + 2);
-    }
-    res += `${pre}</${dom.name}>\n`;
-    return res;
+    return idx + column;
   }
 
   render() {
-    const {dom, editable} = this.props;
+    const {htmlstr} = this.props;
     return (
-      <AceEditor ref="htmlace"
-                 mode="html"
-                 theme="eclipse"
-                 name="htmlace"
-                 height="38vh"
-                 width="100%"
-                 fontSize={14}
-                 readOnly={!editable}
-                 value={this.formatHTML(dom)} />);
+      <Ace ref="htmlace"
+           mode="html"
+           name="htmlace"
+           height={38}
+           onChangeSelection={::this.onChangeSelection}
+           source={`${htmlstr}`} />);
   }
 }

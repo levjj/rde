@@ -1,27 +1,35 @@
 import React, { Component, PropTypes } from 'react';
 import stringify from 'json-stringify-pretty-compact';
-import AceEditor from 'react-ace/src/ace.jsx';
+import { connect } from 'redux/react';
 
+import Ace from './ace';
+import strategy from '../strategy';
+
+@connect(state => ({
+  currState: strategy.current(state)}))
 export default class StateView extends Component {
   static propTypes = {
-    currState: PropTypes.any
+    currState: PropTypes.any,
+    active: PropTypes.bool.isRequired
   }
 
-  onActivate() {
-    this.refs.stateace.editor.resize();
+  shouldComponentUpdate(nextProps) {
+    return this.props.active || nextProps.active;
+  }
+
+  componentDidUpdate(prevProps) {
+    if (!prevProps.active && this.props.active) {
+      this.refs.stateace.repaint();
+    }
   }
 
   render() {
-    const {dom, editable} = this.props;
+    const {currState} = this.props;
     return (
-      <AceEditor ref="stateace"
-                 mode="json"
-                 theme="eclipse"
-                 name="stateace"
-                 height="38vh"
-                 width="100%"
-                 fontSize={14}
-                 readOnly={!editable}
-                 value={stringify(this.props.currState)} />);
+      <Ace ref="stateace"
+           mode="json"
+           name="stateace"
+           height={38}
+           source={stringify(currState)} />);
   }
 }

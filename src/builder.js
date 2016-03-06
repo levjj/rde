@@ -1,7 +1,8 @@
 import $ from 'jquery';
+import _ from 'lodash';
 
 import {event} from './actions/state';
-import {typeOf} from './symstr';
+import {operators, typeOf} from './symstr';
 
 export const eventKeys = [
   'onabort',
@@ -88,7 +89,11 @@ export function compileJSX(node) {
     {
       type: 'Property',
       key: {type: 'Identifier', name: 'name'},
-      value: {type: 'Literal', value: name},
+      value: {
+        type: 'Literal',
+        value: name,
+        loc: node.openingElement.name.loc
+      },
       kind: 'init',
       method: false,
       shorthand: false,
@@ -146,4 +151,40 @@ export function build(dom, dispatch) {
     el.append(build(childDom, dispatch));
   }
   return el;
+}
+
+function add(...strs) {
+  return strs.reduce((res, str) => operators.binary['+'](res, str), '');
+}
+
+function formatCSS(obj) {
+  return Object.keys(obj).reduce((str, key) => {
+    const k = _.snakeCase(key).replace(/_/g, '-');
+    return add(str, k, ':', obj[key], ';');
+  }, '');
+}
+
+export function formatHTML(dom, indent = 0) {
+  const pre = ' '.repeat(indent);
+  if (typeOf(dom) !== 'object') {
+    return add(pre, dom, '\n');
+  }
+  const attrString = Object.keys(dom.attributes).reduce((str, key) => {
+    let value = dom.attributes[key];
+    if (key === 'style' && typeOf(value) === 'object') {
+      value = formatCSS(value);
+    }
+    if (eventKeys.includes(key) || customEventKeys.includes(key)) {
+      return '';
+    }
+    return add(str, key, '="', value, '"');
+  }, '');
+  let res = add(pre, '<', dom.name);
+  if (attrString.length > 0) {
+    res = add(res, ' ', attrString);
+  }
+  res = add(res, '>\n');
+  res = dom.children.reduce((str, childDom) =>
+    add(str, formatHTML(childDom, indent + 2)), res);
+  return add(res, pre, '</', dom.name, '>\n');
 }

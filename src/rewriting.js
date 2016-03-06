@@ -256,7 +256,7 @@ export function rewriteSymStrings(ast) {
     leave: function enter(node) {
       if (node.type === 'Literal' && typeOf(node.value) === 'string') {
         const id = nextId++;
-        mapping[id] = node.range;
+        mapping[id] = node.loc;
         return {
           type: 'CallExpression',
           callee: {

@@ -1,6 +1,20 @@
 let unary;
 let binary;
 
+export function isSymString(val) {
+  if (val === undefined || val === null) {
+    return false;
+  }
+  return val.isSymString;
+}
+
+export function typeOf(val) {
+  if (isSymString(val)) {
+    return 'string';
+  }
+  return typeof val;
+}
+
 function wrap(x) {
   return new Proxy(x, {
     get: (target, key) => {
@@ -9,13 +23,19 @@ function wrap(x) {
       }
       if (key === Symbol.iterator) {
         const chars = [];
-        for (let i = 0; i < target.length; i++) {
+        for (let i = 0; i < target.getLength(); i++) {
           chars.push(target.charAt(i));
         }
         return chars[Symbol.iterator];
       }
-      if (+key >= 0 && +key < target.length) {
+      if (+key >= 0 && +key < target.getLength()) {
         return target.charAt(+key);
+      }
+      if (key === 'length') {
+        return target.getLength();
+      }
+      if (key === 'isSymString') {
+        return true;
       }
       return target[key];
     },
@@ -23,7 +43,7 @@ function wrap(x) {
     deleteProperty: () => true,
     getPrototypeOf: () => String.prototype, // FIXME: Needs to wrapped
     getOwnPropertyDescriptor: (target, prop) => {
-      if (+prop >= 0 && +prop < target.length) {
+      if (+prop >= 0 && +prop < target.getLength()) {
         return {
           value: target.charAt(+prop),
           writable: false,
@@ -37,7 +57,7 @@ function wrap(x) {
     has: () => { throw new TypeError('cannot use \'in\' operator'); },
     ownKeys: (target) => {
       const keys = [];
-      for (let i = 0; i < target.length; i++) {
+      for (let i = 0; i < target.getLength(); i++) {
         keys.push('' + i);
       }
       return keys;
@@ -52,16 +72,42 @@ function wrap(x) {
 export class SymString {
 
   constructor(parts) {
-    const [lst, len] = parts.reduce(([list, start], {str, id, idx}) => {
-      return [[...list, {str, id, idx, start}], start + str.length];
-    }, [[], 0]);
-    this.strs = lst;
-    this.length = len;
+    this.strs = parts;
+  }
+
+  ensureLength() {
+    if (this.length >= 0) return;
+    if (this.strs.length === 0) {
+      this.length = 0;
+      return;
+    }
+    const parts = [{...this.strs[0], start: 0}];
+    for (let i = 1; i < this.strs.length; i++) {
+      const {str, id} = this.strs[i];
+      const prev = parts[parts.length - 1];
+      if (id === 0 && prev.id === 0) {
+        // coalesce basic strings
+        prev.str += str;
+      } else {
+        // add new tracked strlit part
+        parts.push({...this.strs[i], start: prev.start + prev.str.length});
+      }
+    }
+    const last = parts[parts.length - 1];
+    this.length = last.start + last.str.length;
+    this.strs = parts;
+  }
+
+  getLength() {
+    this.ensureLength();
+    return this.length;
   }
 
   add(other) {
     return SymString.create([...this.strs, ...other.strs]);
   }
+
+  isSymString = true;
 
   toSourceString() {
     return this.strs.reduce((res, {str}) => res + str, '');
@@ -78,8 +124,8 @@ export class SymString {
   }
 
   mapParts(f) {
-    return SymString.create(this.strs.map(({str, id, idx, start}) => {
-      return {str: f(str), id, idx, start};
+    return SymString.create(this.strs.map(({str, id, idx}) => {
+      return {str: f(str), id, idx};
     }));
   }
 
@@ -87,6 +133,7 @@ export class SymString {
 
   charAt(i) {
     if (i < 0) return '';
+    this.ensureLength();
     const group = this.strs.find(({str, start}) => start + str.length > i);
     if (group === undefined) return '';
     const localIdx = i - group.start;
@@ -209,16 +256,20 @@ export class SymString {
     const str = this.toSourceString();
     let indices = [];
     const typeo = unary.typeof;
+    let re;
     if (typeo(separator) === 'string') {
-      const idx = str.indexOf(separator);
-      if (idx >= 0) indices = [{index: idx, length: separator.length}];
+      re = RegExp(separator, 'g');
     } else if (separator instanceof RegExp) {
-      indices = [];
-      let res = separator.exec(str);
-      while (separator.exec(str)) {
-        indices.push({index: res.index, length: res[0].length});
-        res = separator.exec(str);
-      }
+      let flags = 'g';
+      if (separator.ignoreCase) flags += 'i';
+      if (separator.multiline) flags += 'm';
+      re = RegExp(separator.source, flags);
+    }
+    indices = [];
+    let res = re.exec(str);
+    while (res) {
+      indices.push({index: res.index, length: res[0].length});
+      res = re.global && re.exec(str);
     }
     const result = [];
     let prevIdx = 0;
@@ -246,6 +297,7 @@ export class SymString {
 
   substring(startIdx, endIdx = this.length) {
     // Returns the characters in a string between two indexes into the string.
+    this.ensureLength();
     const startGroup = this.strs.findIndex(({str, start}) => start + str.length > startIdx);
     if (startGroup === -1) return '';
     const parts = [];
@@ -287,7 +339,7 @@ export class SymString {
 
   toString() {
     // Returns a string representing the specified object. Overrides the Object.prototype.toString() method.
-    return SymString.create(this.strs);
+    return this;
   }
 
   toUpperCase() {
@@ -309,12 +361,12 @@ export class SymString {
   trimRight() {
     // Trims whitespace from the right side of the string.
     const ws = this.match(/\s+$/).length;
-    return this.substr(0, this.length - ws);
+    return this.substr(0, this.getLength() - ws);
   }
 
   valueOf() {
     // Returns the primitive value of the specified object. Overrides the Object.prototype.valueOf() method.
-    return SymString.create(this.strs);
+    return this;
   }
 
   anchor(name) {
@@ -408,40 +460,34 @@ export class SymString {
 }
 
 function sym(val) {
-  if (val instanceof SymString) {
+  if (isSymString(val)) {
     return val;
   }
   return SymString.single(val);
 }
 
-export function typeOf(val) {
-  if (val instanceof SymString) {
-    return 'string';
-  }
-  return typeof val;
-}
 
 unary = {
   '-': (op) => {
-    if (op instanceof SymString) {
+    if (isSymString(op)) {
       return +op.toSourceString();
     }
     return -op;
   },
   '+': (op) => {
-    if (op instanceof SymString) {
+    if (isSymString(op)) {
       return +op.toSourceString();
     }
     return +op;
   },
   '!': (op) => {
-    if (op instanceof SymString) {
+    if (isSymString(op)) {
       return false;
     }
     return !op;
   },
   '~': (op) => {
-    if (op instanceof SymString) {
+    if (isSymString(op)) {
       return -1;
     }
     return ~op;
@@ -454,113 +500,113 @@ unary = {
 binary = {
   '==': (l, r) => {
     /* eslint eqeqeq:0 */
-    const left = l instanceof SymString ? l.toSourceString() : l;
-    const right = r instanceof SymString ? r.toSourceString() : r;
+    const left = isSymString(l) ? l.toSourceString() : l;
+    const right = isSymString(r) ? r.toSourceString() : r;
     return left == right;
   },
   '!=': (l, r) => {
-    const left = l instanceof SymString ? l.toSourceString() : l;
-    const right = r instanceof SymString ? r.toSourceString() : r;
+    const left = isSymString(l) ? l.toSourceString() : l;
+    const right = isSymString(r) ? r.toSourceString() : r;
     return left != right;
   },
   '===': (l, r) => {
-    const left = l instanceof SymString ? l.toSourceString() : l;
-    const right = r instanceof SymString ? r.toSourceString() : r;
+    const left = isSymString(l) ? l.toSourceString() : l;
+    const right = isSymString(r) ? r.toSourceString() : r;
     return left === right;
   },
   '!==': (l, r) => {
-    const left = l instanceof SymString ? l.toSourceString() : l;
-    const right = r instanceof SymString ? r.toSourceString() : r;
+    const left = isSymString(l) ? l.toSourceString() : l;
+    const right = isSymString(r) ? r.toSourceString() : r;
     return left !== right;
   },
   '<': (l, r) => {
-    const left = l instanceof SymString ? l.toSourceString() : l;
-    const right = r instanceof SymString ? r.toSourceString() : r;
+    const left = isSymString(l) ? l.toSourceString() : l;
+    const right = isSymString(r) ? r.toSourceString() : r;
     return left < right;
   },
   '<=': (l, r) => {
-    const left = l instanceof SymString ? l.toSourceString() : l;
-    const right = r instanceof SymString ? r.toSourceString() : r;
+    const left = isSymString(l) ? l.toSourceString() : l;
+    const right = isSymString(r) ? r.toSourceString() : r;
     return left <= right;
   },
   '>': (l, r) => {
-    const left = l instanceof SymString ? l.toSourceString() : l;
-    const right = r instanceof SymString ? r.toSourceString() : r;
+    const left = isSymString(l) ? l.toSourceString() : l;
+    const right = isSymString(r) ? r.toSourceString() : r;
     return left > right;
   },
   '>=': (l, r) => {
-    const left = l instanceof SymString ? l.toSourceString() : l;
-    const right = r instanceof SymString ? r.toSourceString() : r;
+    const left = isSymString(l) ? l.toSourceString() : l;
+    const right = isSymString(r) ? r.toSourceString() : r;
     return left >= right;
   },
   '<<': (l, r) => {
-    const left = l instanceof SymString ? l.toSourceString() : l;
-    const right = r instanceof SymString ? r.toSourceString() : r;
+    const left = isSymString(l) ? l.toSourceString() : l;
+    const right = isSymString(r) ? r.toSourceString() : r;
     return left << right;
   },
   '>>': (l, r) => {
-    const left = l instanceof SymString ? l.toSourceString() : l;
-    const right = r instanceof SymString ? r.toSourceString() : r;
+    const left = isSymString(l) ? l.toSourceString() : l;
+    const right = isSymString(r) ? r.toSourceString() : r;
     return left >> right;
   },
   '>>>': (l, r) => {
-    const left = l instanceof SymString ? l.toSourceString() : l;
-    const right = r instanceof SymString ? r.toSourceString() : r;
+    const left = isSymString(l) ? l.toSourceString() : l;
+    const right = isSymString(r) ? r.toSourceString() : r;
     return left >>> right;
   },
   '+': (left, right) => {
-    if (left instanceof SymString ||
-        right instanceof SymString) {
+    if (isSymString(left) ||
+        isSymString(right)) {
       const leftSym = sym(left);
       const rightSym = sym(right);
-      if (!(leftSym instanceof SymString)) return rightSym;
-      if (!(rightSym instanceof SymString)) return leftSym;
+      if (!(isSymString(leftSym))) return rightSym;
+      if (!(isSymString(rightSym))) return leftSym;
       return leftSym.add(rightSym);
     }
     return left + right;
   },
   '-': (l, r) => {
-    const left = l instanceof SymString ? l.toSourceString() : l;
-    const right = r instanceof SymString ? r.toSourceString() : r;
+    const left = isSymString(l) ? l.toSourceString() : l;
+    const right = isSymString(r) ? r.toSourceString() : r;
     return left - right;
   },
   '*': (l, r) => {
-    const left = l instanceof SymString ? l.toSourceString() : l;
-    const right = r instanceof SymString ? r.toSourceString() : r;
+    const left = isSymString(l) ? l.toSourceString() : l;
+    const right = isSymString(r) ? r.toSourceString() : r;
     return left * right;
   },
   '/': (l, r) => {
-    const left = l instanceof SymString ? l.toSourceString() : l;
-    const right = r instanceof SymString ? r.toSourceString() : r;
+    const left = isSymString(l) ? l.toSourceString() : l;
+    const right = isSymString(r) ? r.toSourceString() : r;
     return left / right;
   },
   '%': (l, r) => {
-    const left = l instanceof SymString ? l.toSourceString() : l;
-    const right = r instanceof SymString ? r.toSourceString() : r;
+    const left = isSymString(l) ? l.toSourceString() : l;
+    const right = isSymString(r) ? r.toSourceString() : r;
     return left % right;
   },
   '|': (l, r) => {
-    const left = l instanceof SymString ? l.toSourceString() : l;
-    const right = r instanceof SymString ? r.toSourceString() : r;
+    const left = isSymString(l) ? l.toSourceString() : l;
+    const right = isSymString(r) ? r.toSourceString() : r;
     return left | right;
   },
   '^': (l, r) => {
-    const left = l instanceof SymString ? l.toSourceString() : l;
-    const right = r instanceof SymString ? r.toSourceString() : r;
+    const left = isSymString(l) ? l.toSourceString() : l;
+    const right = isSymString(r) ? r.toSourceString() : r;
     return left ^ right;
   },
   '&': (l, r) => {
-    const left = l instanceof SymString ? l.toSourceString() : l;
-    const right = r instanceof SymString ? r.toSourceString() : r;
+    const left = isSymString(l) ? l.toSourceString() : l;
+    const right = isSymString(r) ? r.toSourceString() : r;
     return left & right;
   },
   'in': (l, r) => {
-    const left = l instanceof SymString ? l.toSourceString() : l;
-    const right = r instanceof SymString ? r.toSourceString() : r;
+    const left = isSymString(l) ? l.toSourceString() : l;
+    const right = isSymString(r) ? r.toSourceString() : r;
     return left in right;
   },
   'instanceof': (obj, clz) => {
-    if (obj instanceof SymString && clz === String) {
+    if (isSymString(obj) && clz === String || clz === SymString) {
       return true;
     }
     return obj instanceof clz;

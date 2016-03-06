@@ -80,7 +80,7 @@ describe('rewrite JSX', () => {
 });
 
 function rew(src) {
-  const parsed = parse(src, {range: true});
+  const parsed = parse(src, {loc: true});
   const {ast, mapping} = rewriteSymStrings(parsed);
   const rewritten = rewriteOps(ast);
   const generated = generate(rewritten);
@@ -88,7 +88,20 @@ function rew(src) {
   global.operators = operators;
   global.sym = SymString.single;
   const res = eval(generated);
-  return {ast, res, mapping};
+  return {ast, res, length: res.length, mapping};
+}
+
+function inlineLoc(from, to) {
+  return {
+    start: {
+      line: 1,
+      column: from
+    },
+    end: {
+      line: 1,
+      column: to
+    }
+  };
 }
 
 describe('rewrite symbolic strings', () => {
@@ -105,7 +118,7 @@ describe('rewrite symbolic strings', () => {
       idx: 0,
       start: 0
     }]);
-    expect(mapping[id]).to.deep.equal([0, 5]);
+    expect(mapping[id]).to.deep.equal(inlineLoc(0, 5));
   });
 
   it('rewrite string concat literal', () => {
@@ -125,7 +138,7 @@ describe('rewrite symbolic strings', () => {
       idx: 0,
       start: 3
     }]);
-    expect(mapping[id]).to.deep.equal([0, 5]);
+    expect(mapping[id]).to.deep.equal(inlineLoc(0, 5));
   });
 
   it('rewrite string concat two literals', () => {
@@ -146,8 +159,8 @@ describe('rewrite symbolic strings', () => {
       idx: 0,
       start: 3
     }]);
-    expect(mapping[id]).to.deep.equal([0, 5]);
-    expect(mapping[id2]).to.deep.equal([8, 13]);
+    expect(mapping[id]).to.deep.equal(inlineLoc(0, 5));
+    expect(mapping[id2]).to.deep.equal(inlineLoc(8, 13));
   });
 
   it('rewrite string concat assignment', () => {
@@ -168,8 +181,8 @@ describe('rewrite symbolic strings', () => {
       idx: 0,
       start: 3
     }]);
-    expect(mapping[id]).to.deep.equal([8, 13]);
-    expect(mapping[id2]).to.deep.equal([20, 25]);
+    expect(mapping[id]).to.deep.equal(inlineLoc(8, 13));
+    expect(mapping[id2]).to.deep.equal(inlineLoc(20, 25));
   });
 
   it('rewrite string prefix', () => {

@@ -1,9 +1,13 @@
 import React, { Component, PropTypes } from 'react';
 import $ from 'jquery';
+import { connect } from 'redux/react';
 
 import {build} from '../builder';
 import {typeOf} from '../symstr';
 
+@connect(state => ({
+  dom: state.state.dom
+}))
 export default class LiveView extends Component {
   static propTypes = {
     dom: PropTypes.any,
