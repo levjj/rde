@@ -17,6 +17,7 @@ export default class Editor extends Component {
   }
 
   onChange(newSource) {
+    console.log('tom');
     this.props.dispatch(changeReqest(newSource));
   }
 

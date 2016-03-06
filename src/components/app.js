@@ -2,7 +2,6 @@ import React, { Component, PropTypes } from 'react';
 import { connect } from 'redux/react';
 import { PageHeader, Row, Col, Panel, Button, Glyphicon, Input, Tabs, Tab } from 'react-bootstrap';
 import $ from 'jquery';
-import _ from 'lodash';
 import filePicker from 'component-file-picker';
 
 import { flappy, counter, spiral } from '../examples';
