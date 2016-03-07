@@ -23,7 +23,9 @@ const initialState = {
 export function getFrameHandlers(state) {
   function rec(d) {
     if (typeOf(d) !== 'object') return [];
-    const fh = d.attributes.onframe ? [d.attributes.onframe] : [];
+    const fh = d.attributes
+      .filter(({key}) => `${key}` === 'onframe')
+      .map(({value}) => value);
     return d.children.reduce((res, child) => [...res, ...rec(child)], fh);
   }
   return rec(state.state.dom);
