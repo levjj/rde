@@ -14,6 +14,7 @@ export default class Ace extends Component {
     highlight: PropTypes.any,
     height: PropTypes.number,
     showLineNumbers: PropTypes.bool,
+    readOnly: PropTypes.bool,
     onChange: PropTypes.func,
     onChangeSelection: PropTypes.func
   }
@@ -23,7 +24,8 @@ export default class Ace extends Component {
   }
 
   shouldComponentUpdate(nextProps) {
-    return `${nextProps.source}` !== `${this.props.source}` ||
+    return nextProps.readOnly !== this.props.readOnly ||
+      `${nextProps.source}` !== `${this.props.source}` ||
       !this.locEqual(nextProps.highlight, this.props.highlight);
   }
 
@@ -84,7 +86,7 @@ export default class Ace extends Component {
   }
 
   render() {
-    const {name, source, mode, height} = this.props;
+    const {name, source, mode, height, readOnly} = this.props;
     return (
       <AceEditor ref="ace"
                  mode={mode}
@@ -94,6 +96,7 @@ export default class Ace extends Component {
                  width="100%"
                  fontSize={14}
                  value={source}
+                 readOnly={readOnly}
                  onChange={::this.onChange}
                  onLoad={::this.onAceLoad} />
     );

@@ -35,7 +35,7 @@ describe('rewrite JSX', () => {
     const [, render] = rewrite('function render() { return <a />; }');
     const dom = render();
     expect(dom.name.toSourceString()).to.equal('a');
-    expect(dom.attributes).to.deep.equal({});
+    expect(dom.attributes).to.deep.equal([]);
     expect(dom.children).to.deep.equal([]);
     /* eslint eqeqeq:0 */
     expect(dom.name == 'a').to.be.true;
@@ -46,7 +46,10 @@ describe('rewrite JSX', () => {
     const [, render] = rewrite('function render() { return <a x="f" />; }');
     const dom = render();
     expect(dom.name.toSourceString()).to.equal('a');
-    expect(dom.attributes.x.toSourceString()).to.equal('f');
+    expect(dom.attributes).to.have.length(1);
+    const [{key, value}] = dom.attributes;
+    expect(key.toSourceString()).to.equal('x');
+    expect(value.toSourceString()).to.equal('f');
     expect(dom.children).to.deep.equal([]);
   });
 
@@ -54,7 +57,10 @@ describe('rewrite JSX', () => {
     const [, render] = rewrite('function render() { return <a x={"f"} />; }');
     const dom = render();
     expect(dom.name.toSourceString()).to.equal('a');
-    expect(dom.attributes.x.toSourceString()).to.equal('f');
+    expect(dom.attributes).to.have.length(1);
+    const [{key, value}] = dom.attributes;
+    expect(key.toSourceString()).to.equal('x');
+    expect(value.toSourceString()).to.equal('f');
     expect(dom.children).to.deep.equal([]);
   });
 
@@ -62,10 +68,10 @@ describe('rewrite JSX', () => {
     const [, render] = rewrite('function render() { return <a><b /></a>; }');
     const dom = render();
     expect(dom.name.toSourceString()).to.equal('a');
-    expect(dom.attributes).to.deep.equal({});
+    expect(dom.attributes).to.deep.equal([]);
     expect(dom.children).to.have.length(1);
     expect(dom.children[0].name.toSourceString()).to.equal('b');
-    expect(dom.children[0].attributes).to.deep.equal({});
+    expect(dom.children[0].attributes).to.deep.equal([]);
     expect(dom.children[0].children).to.deep.equal([]);
   });
 
@@ -73,7 +79,7 @@ describe('rewrite JSX', () => {
     const [, render] = rewrite('function render() { return <a>{"foo"}</a>; }');
     const dom = render();
     expect(dom.name.toSourceString()).to.equal('a');
-    expect(dom.attributes).to.deep.equal({});
+    expect(dom.attributes).to.deep.equal([]);
     expect(dom.children).to.have.length(1);
     expect(dom.children[0].toSourceString()).to.equal('foo');
   });

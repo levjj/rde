@@ -6,11 +6,13 @@ import {build} from '../builder';
 import {typeOf} from '../symstr';
 
 @connect(state => ({
-  dom: state.state.dom
+  dom: state.state.dom,
+  isActive: state.state.isActive
 }))
 export default class LiveView extends Component {
   static propTypes = {
     dom: PropTypes.any,
+    isActive: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired
   }
 
@@ -23,7 +25,8 @@ export default class LiveView extends Component {
   shouldComponentUpdate(nextProps) {
     function rec(left, right) {
       if (typeOf(left) !== typeOf(right)) return true;
-      if (typeOf(left) !== 'object') return left === right;
+      if (typeOf(left) === 'string') return `${left}` !== `${right}`;
+      if (typeOf(left) !== 'object') return left !== right;
       const leftKeys = Object.keys(left);
       const rightKeys = Object.keys(right);
       if (leftKeys.length !== rightKeys.length) return true;
@@ -32,8 +35,10 @@ export default class LiveView extends Component {
         if (key !== rightKeys[i]) return true;
         if (rec(left[key], right[key])) return true;
       }
+      return false;
     }
-    return rec(this.props.dom, nextProps.dom);
+    return this.props.isActive !== nextProps.isActive ||
+           rec(this.props.dom, nextProps.dom);
   }
 
   componentWillUpdate() {
@@ -43,7 +48,8 @@ export default class LiveView extends Component {
 
   componentDidUpdate() {
     const view = React.findDOMNode(this.refs.view);
-    $(view).append(build(this.props.dom, this.props.dispatch));
+    const {dom, isActive, dispatch} = this.props;
+    $(view).append(build(dom, dispatch, !isActive));
   }
 
   render() {

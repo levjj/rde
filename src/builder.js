@@ -2,7 +2,8 @@ import $ from 'jquery';
 import _ from 'lodash';
 
 import {event} from './actions/state';
-import {operators, typeOf} from './symstr';
+import {stringLitCursor, stringLitInsert, stringLitDelete, firstDifference, strIndexOf} from './actions/manipulation';
+import {operators, typeOf, isSymString} from './symstr';
 
 export const eventKeys = [
   'onabort',
@@ -105,7 +106,9 @@ export function compileJSX(node) {
   });
 
   const openingLoc = jsxLocAsStringLitLoc(node.openingElement.name);
-  const closingLoc = jsxLocAsStringLitLoc(node.closingElement.name);
+  const loc = node.closingElement
+    ? {...openingLoc, extra: jsxLocAsStringLitLoc(node.closingElement.name)}
+    : openingLoc;
   return {type: 'ObjectExpression', properties: [
     {
       type: 'Property',
@@ -113,7 +116,7 @@ export function compileJSX(node) {
       value: {
         type: 'Literal',
         value: name,
-        loc: {...openingLoc, extra: closingLoc}
+        loc
       },
       kind: 'init',
       method: false,
@@ -162,23 +165,66 @@ export function wrapHandler(dispatch, func) {
   };
 }
 
-export function build(dom, dispatch) {
+function submitChange(oldStr, newStr) {
+  const firstDiff = firstDifference('' + oldStr, newStr);
+  const diff = newStr.length - oldStr.length;
+  // if adding characters, look up lit of prev char, else current
+  const litAt = diff > 0 ? firstDiff - 1 : firstDiff;
+  const c = oldStr[litAt];
+  if (!isSymString(c)) return false;
+  const {id, idx} = c.strs[0];
+  if (id > 0) {
+    if (diff > 0) {
+      const insertStr = newStr.substr(firstDiff, diff);
+      return stringLitInsert(id, idx, insertStr);
+    } else if (diff < 0) {
+      return stringLitDelete(id, idx, -diff);
+    }
+  }
+  return null;
+}
+
+function buildEditableSpan(str, dispatch) {
+  const elem = $(`<span>${str}</span>`);
+  elem.prop('contenteditable', true);
+  elem.on('input', () => {
+    const action = submitChange(str, elem.text());
+    if (!action) {
+      elem.text('' + str);
+    } else {
+      dispatch(action);
+    }
+  });
+  elem.on('focus', () => {
+    const c = str[0];
+    if (!isSymString(c)) return false;
+    dispatch(stringLitCursor(c.strs[0].id));
+  });
+  elem.on('blur', () => {
+    dispatch(stringLitCursor(0));
+  });
+  return elem;
+}
+
+export function build(dom, dispatch, editable) {
   if (typeOf(dom) !== 'object') {
-    return $(`<span>${dom}</span>`);
+    return editable && isSymString(dom)
+           ? buildEditableSpan(dom, dispatch)
+           : $(`<span>${dom}</span>`);
   }
   const el = $(`<${dom.name}></${dom.name}>`);
   dom.attributes.forEach(({key, value}) => {
     const sKey = `${key}`;
     if (sKey === 'style' && typeOf(value) === 'object') {
       el.css(value);
-    } else if (eventKeys.indexOf(sKey) >= 0) {
+    } else if (!editable && eventKeys.indexOf(sKey) >= 0) {
       el.on(sKey.substr(2), wrapHandler(dispatch, value));
     } else if (customEventKeys.indexOf(sKey) < 0) {
       el.attr(sKey, value);
     }
   });
   for (const childDom of dom.children) {
-    el.append(build(childDom, dispatch));
+    el.append(build(childDom, dispatch, editable));
   }
   return el;
 }

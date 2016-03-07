@@ -3,14 +3,16 @@ import {connect} from 'redux/react';
 
 import Ace from './ace';
 import {isSymString} from '../symstr';
-import {stringLitCursor, stringLitInsert, stringLitDelete} from '../actions/manipulation';
+import {stringLitCursor, stringLitInsert, stringLitDelete, firstDifference, strIndexOf} from '../actions/manipulation';
 
 @connect(state => ({
-  htmlstr: state.state.htmlstr
+  htmlstr: state.state.htmlstr,
+  isActive: state.state.isActive
 }))
 export default class HTMLView extends Component {
   static propTypes = {
     htmlstr: PropTypes.any,
+    isActive: PropTypes.bool.isRequired,
     active: PropTypes.bool.isRequired,
     editable: PropTypes.bool,
     dispatch: PropTypes.func.isRequired
@@ -31,7 +33,7 @@ export default class HTMLView extends Component {
   }
 
   onChange(newSource) {
-    const firstDiff = this.firstDifference('' + this.props.htmlstr, newSource);
+    const firstDiff = firstDifference('' + this.props.htmlstr, newSource);
     const diff = newSource.length - this.props.htmlstr.length;
     // if adding characters, look up lit of prev char, else current
     const litAt = diff > 0 ? firstDiff - 1 : firstDiff;
@@ -51,10 +53,10 @@ export default class HTMLView extends Component {
 
   onChangeSelection(selection) {
     const {row, column} = selection.start;
-    const htmlidx = this.strIndexOf(row, Math.max(0, column - 1));
+    const htmlidx = strIndexOf(this.props.htmlstr, row, Math.max(0, column - 1));
     const lit = this.getStrLitAtPos(htmlidx);
     if (lit) {
-      this.props.dispatch(stringLitCursor(lit.id, lit.idx));
+      this.props.dispatch(stringLitCursor(lit.id));
     }
   }
 
@@ -66,27 +68,11 @@ export default class HTMLView extends Component {
     return null;
   }
 
-  firstDifference(strA, strB) {
-    const lim = Math.min(strA.length, strB.length);
-    for (let i = 0; i < lim; i++) {
-      if (strA[i] !== strB[i]) return i;
-    }
-    return lim;
-  }
-
-  strIndexOf(row, column) {
-    const parts = `${this.props.htmlstr}`.split('\n');
-    let idx = 0;
-    for (let i = 0; i < row; i++) {
-      idx += parts[i].length + 1;
-    }
-    return idx + column;
-  }
-
   render() {
-    const {htmlstr} = this.props;
+    const {htmlstr, isActive} = this.props;
     return (
       <Ace ref="htmlace"
+           readOnly={isActive}
            mode="html"
            name="htmlace"
            height={38}
