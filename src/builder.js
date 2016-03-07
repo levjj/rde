@@ -217,8 +217,10 @@ export function build(dom, dispatch, editable) {
     const sKey = `${key}`;
     if (sKey === 'style' && typeOf(value) === 'object') {
       el.css(value);
-    } else if (!editable && eventKeys.indexOf(sKey) >= 0) {
-      el.on(sKey.substr(2), wrapHandler(dispatch, value));
+    } else if (eventKeys.indexOf(sKey) >= 0) {
+      if (editable) {
+        el.on(sKey.substr(2), wrapHandler(dispatch, value));
+      }
     } else if (customEventKeys.indexOf(sKey) < 0) {
       el.attr(sKey, value);
     }

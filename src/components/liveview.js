@@ -18,8 +18,9 @@ export default class LiveView extends Component {
 
   componentDidMount() {
     const view = React.findDOMNode(this.refs.view);
+    const {dom, isActive, dispatch} = this.props;
     $(view).empty();
-    $(view).append(build(this.props.dom, this.props.dispatch));
+    $(view).append(build(dom, dispatch, !isActive));
   }
 
   shouldComponentUpdate(nextProps) {
