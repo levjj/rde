@@ -16,6 +16,10 @@ export default class HTMLView extends Component {
     dispatch: PropTypes.func.isRequired
   }
 
+  componentDidMount() {
+    window.htmlview = this;
+  }
+
   shouldComponentUpdate(nextProps) {
     return this.props.active || nextProps.active;
   }
@@ -28,24 +32,26 @@ export default class HTMLView extends Component {
 
   onChange(newSource) {
     const firstDiff = this.firstDifference('' + this.props.htmlstr, newSource);
-    const lit = this.getStrLitAtPos(firstDiff);
-    const diff = newSource.length > this.props.htmlstr.length;
+    const diff = newSource.length - this.props.htmlstr.length;
+    // if adding characters, look up lit of prev char, else current
+    const litAt = diff > 0 ? firstDiff - 1 : firstDiff;
+    const lit = this.getStrLitAtPos(litAt);
     if (lit && lit.id > 0) {
       const {id, idx} = lit;
       if (diff > 0) {
         const insertStr = newSource.substr(firstDiff, diff);
-        // this.props.dispatch(stringLitInsert(id, idx, insertStr));
+        this.props.dispatch(stringLitInsert(id, idx, insertStr));
       } else if (diff < 0) {
-        // this.props.dispatch(stringLitDelete(id, idx, -diff));
+        this.props.dispatch(stringLitDelete(id, idx, -diff));
       }
     } else {
-      // this.refs.htmlace.dropEdit();
+      this.refs.htmlace.dropEdit();
     }
   }
 
   onChangeSelection(selection) {
     const {row, column} = selection.start;
-    const htmlidx = this.strIndexOf(row, column);
+    const htmlidx = this.strIndexOf(row, Math.max(0, column - 1));
     const lit = this.getStrLitAtPos(htmlidx);
     if (lit) {
       this.props.dispatch(stringLitCursor(lit.id, lit.idx));

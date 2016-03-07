@@ -26,7 +26,7 @@ export function stringLitInsert(id, idx, insertStr) {
   return (dispatch, getState) => {
     const {source, mapping} = currentVersion(getState());
     const {line, column} = mapping[id].start;
-    const startIdx = strIndexOf(source, line - 1, column + idx);
+    const startIdx = strIndexOf(source, line - 1, column + idx) + 2;
     const newSource = source.substr(0, startIdx) + insertStr + source.substr(startIdx);
     return {
       type: CHANGE_REQUEST,
@@ -39,7 +39,7 @@ export function stringLitDelete(id, idx, delLength) {
   return (dispatch, getState) => {
     const {source, mapping} = currentVersion(getState());
     const {line, column} = mapping[id].start;
-    const startIdx = strIndexOf(source, line - 1, column + idx);
+    const startIdx = strIndexOf(source, line - 1, column + idx) + 1;
     const newSource = source.substr(0, startIdx) + source.substr(startIdx + delLength);
     return {
       type: CHANGE_REQUEST,

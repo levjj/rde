@@ -63,19 +63,37 @@ export const eventKeys = [
   'onvolumechange',
   'onwaiting'];
 
-export const customEventKeys = [
-  'onframe'];
+export const customEventKeys = ['onframe'];
+
+function jsxLocAsStringLitLoc(node) {
+  // JSX elements are identifiers, so need to
+  // expand loc to left and right for compatibility
+  // with normal string literals
+  const {loc: {start, end}} = node;
+  return {
+    start: {
+      line: start.line,
+      column: start.column - 1
+    },
+    end: {
+      line: end.line,
+      column: end.column + 1
+    }
+  };
+}
 
 export function compileJSX(node) {
   if (node.type === 'Literal' && typeOf(node.value) === 'string') {
-    return {...node, value: node.value.trim()};
+    const loc = jsxLocAsStringLitLoc(node);
+    return {...node, loc, value: node.value.replace(/\s+/g, ' ')};
   }
   if (node.type !== 'JSXElement') return node;
   const name = node.openingElement.name.name;
   const attributes = [];
   for (const attr of node.openingElement.attributes) {
+    const attrKeyLoc = jsxLocAsStringLitLoc(attr.name);
     attributes.push({
-      key: attr.name.name,
+      key: {type: 'Literal', value: attr.name.name, loc: attrKeyLoc},
       value: attr.value
     });
   }
@@ -85,6 +103,9 @@ export function compileJSX(node) {
            typeOf(n.value) !== 'string' ||
            n.value.length > 0;
   });
+
+  const openingLoc = jsxLocAsStringLitLoc(node.openingElement.name);
+  const closingLoc = jsxLocAsStringLitLoc(node.closingElement.name);
   return {type: 'ObjectExpression', properties: [
     {
       type: 'Property',
@@ -92,7 +113,7 @@ export function compileJSX(node) {
       value: {
         type: 'Literal',
         value: name,
-        loc: node.openingElement.name.loc
+        loc: {...openingLoc, extra: closingLoc}
       },
       kind: 'init',
       method: false,
@@ -101,15 +122,24 @@ export function compileJSX(node) {
     }, {
       type: 'Property',
       key: {type: 'Identifier', name: 'attributes'},
-      value: {type: 'ObjectExpression', properties: attributes.map(({key, value}) => ({
-        type: 'Property',
-        key: {type: 'Identifier', name: key},
-        value,
-        kind: 'init',
-        method: false,
-        shorthand: false,
-        computed: false
-      }))},
+      value: {type: 'ArrayExpression', elements: attributes.map(({key, value}) => ({type: 'ObjectExpression', properties: [
+        {
+          type: 'Property',
+          key: {type: 'Identifier', name: 'key'},
+          value: key,
+          kind: 'init',
+          method: false,
+          shorthand: false,
+          computed: false
+        }, {
+          type: 'Property',
+          key: {type: 'Identifier', name: 'value'},
+          value,
+          kind: 'init',
+          method: false,
+          shorthand: false,
+          computed: false
+        }]}))},
       kind: 'init',
       method: false,
       shorthand: false,
@@ -137,14 +167,14 @@ export function build(dom, dispatch) {
     return $(`<span>${dom}</span>`);
   }
   const el = $(`<${dom.name}></${dom.name}>`);
-  Object.keys(dom.attributes).forEach((key) => {
-    const value = dom.attributes[key];
-    if (key === 'style' && typeOf(value) === 'object') {
+  dom.attributes.forEach(({key, value}) => {
+    const sKey = `${key}`;
+    if (sKey === 'style' && typeOf(value) === 'object') {
       el.css(value);
-    } else if (eventKeys.indexOf(key) >= 0) {
-      el.on(key.substr(2), wrapHandler(dispatch, value));
-    } else if (customEventKeys.indexOf(key) < 0) {
-      el.attr(key, value);
+    } else if (eventKeys.indexOf(sKey) >= 0) {
+      el.on(sKey.substr(2), wrapHandler(dispatch, value));
+    } else if (customEventKeys.indexOf(sKey) < 0) {
+      el.attr(sKey, value);
     }
   });
   for (const childDom of dom.children) {
@@ -169,12 +199,12 @@ export function formatHTML(dom, indent = 0) {
   if (typeOf(dom) !== 'object') {
     return add(pre, dom, '\n');
   }
-  const attrString = Object.keys(dom.attributes).reduce((str, key) => {
-    let value = dom.attributes[key];
-    if (key === 'style' && typeOf(value) === 'object') {
-      value = formatCSS(value);
+  const attrString = dom.attributes.reduce((str, {key, value}) => {
+    const sKey = `${key}`;
+    if (sKey === 'style' && typeOf(value) === 'object') {
+      return add(str, key, '="', formatCSS(value), '"');
     }
-    if (eventKeys.includes(key) || customEventKeys.includes(key)) {
+    if (eventKeys.includes(sKey) || customEventKeys.includes(sKey)) {
       return '';
     }
     return add(str, key, '="', value, '"');

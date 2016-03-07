@@ -57,7 +57,7 @@ export default class Ace extends Component {
     editor.getSession().setTabSize(2);
     editor.renderer.setShowGutter(this.props.showLineNumbers);
     editor.on('changeSelection', () => {
-      if (this.props.onChangeSelection) {
+      if (this.props.onChangeSelection && this.hasMounted) {
         this.props.onChangeSelection(editor.getSelectionRange());
       }
     });
