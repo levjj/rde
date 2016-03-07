@@ -27,5 +27,3 @@ build/Release
 node_modules
 benchmarks/*.pdf
 benchmarks/*.csv
-
-static/**/*
