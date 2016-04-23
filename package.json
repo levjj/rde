@@ -8,7 +8,8 @@
     "lint": "eslint src test",
     "build": "node ./node_modules/webpack/bin/webpack.js --verbose --colors --display-error-details --config webpack.config.js",
     "test": "node ./node_modules/webpack/bin/webpack.js --verbose --colors --display-error-details --config webpack.tests.config.js",
-    "perf": "mocha -t 0 --harmony --harmony_proxies --compilers js:babel-core/register benchmarks/benchmark.js"
+    "perf": "mocha -t 0 --harmony --harmony_proxies --compilers js:babel-core/register benchmarks/benchmark.js",
+    "gh-pages": "git checkout gh-pages ; git rebase master ; npm run build ; git commit -a -m build ; git push -f ; git checkout master"
   },
   "repository": {
     "type": "git",
