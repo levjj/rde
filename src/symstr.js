@@ -18,7 +18,7 @@ export function typeOf(val) {
 function wrap(x) {
   return new Proxy(x, {
     get: (target, key) => {
-      if (key === Symbol.toPrimitive) {
+      if (key === Symbol.toPrimitive || key === Symbol.toStringTag) {
         return target.toPrimitive;
       }
       if (key === Symbol.iterator) {
@@ -28,6 +28,7 @@ function wrap(x) {
         }
         return chars[Symbol.iterator];
       }
+      if (typeof key === 'symbol') return target[key];
       if (+key >= 0 && +key < target.getLength()) {
         return target.charAt(+key);
       }
@@ -54,7 +55,9 @@ function wrap(x) {
       return undefined;
     },
     defineProperty: () => { throw new TypeError('defineProperty invalid'); },
-    has: () => { throw new TypeError('cannot use \'in\' operator'); },
+    has: function has(target, key) {
+      return this.ownKeys(target).includes(key);
+    },
     ownKeys: (target) => {
       const keys = [];
       for (let i = 0; i < target.getLength(); i++) {
