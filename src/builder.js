@@ -199,7 +199,9 @@ function buildEditableSpan(str, dispatch) {
     }
   });
   elem.on('focus', () => {
-    const c = str[0];
+    const selection = window.getSelection();
+    const idx = selection && selection.focusOffset || 0;
+    const c = str[idx];
     if (!isSymString(c)) return false;
     dispatch(stringLitCursor(c.strs[0].id));
   });
