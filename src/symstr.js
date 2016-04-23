@@ -222,11 +222,10 @@ export class SymString {
       const idx = str.indexOf(substr);
       if (idx >= 0) indices = [{index: idx, length: substr.length}];
     } else if (substr instanceof RegExp) {
-      indices = [];
       let res = substr.exec(str);
       while (res) {
         indices.push({index: res.index, length: res[0].length});
-        res = substr.exec(str);
+        res = substr.global && substr.exec(str);
       }
     }
     let result = '';
