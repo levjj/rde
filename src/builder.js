@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 import {event} from './actions/state';
 import {stringLitCursor, stringLitInsert, stringLitDelete, firstDifference, strIndexOf} from './actions/manipulation';
-import {operators, typeOf, isSymString} from './symstr';
+import {operators, typeOf, isSymString, convertSymStr} from './symstr';
 
 export const eventKeys = [
   'onabort',
@@ -161,7 +161,10 @@ export function compileJSX(node) {
 
 export function wrapHandler(dispatch, func) {
   return function handler() {
-    dispatch(event(() => func.apply(this, arguments)));
+    dispatch(event(() => {
+      const args = Array.from(arguments).map(convertSymStr);
+      func.apply(this, args);
+    }));
   };
 }
 

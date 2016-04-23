@@ -613,4 +613,12 @@ binary = {
   }
 };
 
+export function convertSymStr(x) {
+  if (isSymString(x)) return x;
+  if (typeOf(x) === 'string') return sym(x);
+  return new Proxy(x, {
+    get: (target, key) => convertSymStr(target[key])
+  });
+}
+
 export const operators = { unary, binary };
