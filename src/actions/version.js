@@ -31,10 +31,10 @@ function check(ast) {
   if (globalScope.thisFound) {
     throw new ReferenceError('this is not defined');
   }
-  if (!globalScope.variables.some((v) => v.name === 'render' &&
+  if (!globalScope.variables.some((v) => v.name === 'view' &&
                                          v.defs.length === 1 &&
                                          v.defs[0].type === 'FunctionName')) {
-    throw new Error('Expected a "render" function');
+    throw new Error('Expected a "view" function');
   }
 }
 

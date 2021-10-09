@@ -61,7 +61,7 @@ function returnRenderInit() {
         name: 'init'
       }, {
         type: 'Identifier',
-        name: 'render'
+        name: 'view'
       }]
     }
   };

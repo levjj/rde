@@ -116,6 +116,10 @@ export class SymString {
     return this.strs.reduce((res, {str}) => res + str, '');
   }
 
+  toJSON() {
+    return this.toSourceString();
+  }
+
   toPrimitive(hint) {
     if (hint === 'number') {
       return +this.toSourceString();

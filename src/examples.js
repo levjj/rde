@@ -4,7 +4,7 @@ function click() {
   i++;
 }
 
-function render() {
+function view() {
   return (<div>
     <h1>Demo</h1>
     <p>Count: {i}</p>
@@ -57,7 +57,7 @@ function bird() {
     }} />);
 }
 
-function render() {
+function view() {
   return (
     <div onmousedown={click}>
       {background()}
@@ -100,7 +100,7 @@ function dot(base) {
   </div>);
 }
 
-function render() {
+function view() {
   return (<div onframe={step} style={{height: '300px', width: '100%'}}>
     <div style={{position: 'relative', top: '50%', left: '50%'}}>
       {dot(32)}

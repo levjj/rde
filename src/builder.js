@@ -2,7 +2,7 @@ import $ from 'jquery';
 import _ from 'lodash';
 
 import {event} from './actions/state';
-import {stringLitCursor, stringLitInsert, stringLitDelete, firstDifference, strIndexOf} from './actions/manipulation';
+import {stringLitCursor, stringLitInsert, stringLitDelete, firstDifference} from './actions/manipulation';
 import {operators, typeOf, isSymString, convertSymStr} from './symstr';
 
 export const eventKeys = [
@@ -231,7 +231,13 @@ export function build(dom, dispatch, editable) {
     }
   });
   for (const childDom of dom.children) {
-    el.append(build(childDom, dispatch, editable));
+    if (childDom instanceof Array) {
+      for (const cd of childDom) {
+        el.append(build(cd, dispatch, editable));
+      }
+    } else {
+      el.append(build(childDom, dispatch, editable));
+    }
   }
   return el;
 }
@@ -267,7 +273,11 @@ export function formatHTML(dom, indent = 0) {
     res = add(res, ' ', attrString);
   }
   res = add(res, '>\n');
-  res = dom.children.reduce((str, childDom) =>
-    add(str, formatHTML(childDom, indent + 2)), res);
+  res = dom.children.reduce((str, childDom) => {
+    if (childDom instanceof Array) {
+      return childDom.reduce((cd, prev) => add(prev, formatHTML(cd, indent + 2)), str);
+    }
+    return add(str, formatHTML(childDom, indent + 2));
+  }, res);
   return add(res, pre, '</', dom.name, '>\n');
 }

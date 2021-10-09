@@ -56,6 +56,7 @@ class StateMembrane {
     }
     const proxy = new Proxy(x, {
       get: (target, key) => {
+        if (key === 'prototype') return target[key];
         const changes = this.changes.get(target);
         if (changes && Object.hasOwnProperty.call(changes, key)) {
           const idx = this.lookup(changes[key]);
@@ -90,13 +91,6 @@ class StateMembrane {
         }
         target[key] = value;
         return true;
-      },
-      apply: () => {
-        try {
-          throw new TypeError('Call of a first-order value');
-        } catch (e) {
-          throw e;
-        }
       },
       ownKeys: (target) => {
         const props = this.changes.get(target);
